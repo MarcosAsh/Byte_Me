@@ -6,8 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-// I love Marcos
-
 @RestController
 @RequestMapping("/api/analytics")
 @RequiredArgsConstructor
