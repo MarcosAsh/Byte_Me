@@ -126,3 +126,4 @@ public class AnalyticsController {
         String mealsAssumption;
     }
 }
+
