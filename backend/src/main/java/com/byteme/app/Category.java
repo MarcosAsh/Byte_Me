@@ -1,7 +1,7 @@
 package com.byteme.app;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.*; 
 import java.util.UUID;
 
 @Entity
@@ -16,3 +16,4 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String name;
 }
+ 
