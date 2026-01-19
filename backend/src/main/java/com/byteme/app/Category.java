@@ -1,7 +1,6 @@
 package com.byteme.app;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.util.UUID;
 
 @Entity
@@ -16,9 +15,7 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String name;
 
-    public Category(String name) {
-        this.name = name;
-    }
+    public Category() {}
 
     public UUID getCategoryId() {return categoryId;}
     public void setCategoryId(UUID categoryId) {this.categoryId = categoryId;}
