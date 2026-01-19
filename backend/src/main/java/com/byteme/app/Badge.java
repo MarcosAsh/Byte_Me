@@ -1,6 +1,7 @@
 package com.byteme.app;
 
 import jakarta.persistence.*;
+
 import java.util.UUID;
 
 @Entity
