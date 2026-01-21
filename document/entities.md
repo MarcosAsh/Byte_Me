@@ -56,8 +56,6 @@ Project: Food Waste Rescue Marketplace
 - BundlePosting → Category (Many-to-One)
 
 
-
-Description
 ---
 
 ## 3) Category
@@ -101,7 +99,7 @@ Description
 
 - Employee → Reservation (One-to-Many)
 
-- Employee → RescueEvent (One-to-Many, optional)
+- Employee → RescueEvent (One-to-Many)
 ---
 
 ## 5) EmployeeBadge
@@ -184,7 +182,7 @@ Description
 ### Relationships
 - Organisation → Employee (One-to-Many)
 
-- Organisation → Reservation (One-to-Many)
+- Organisation → Reservation (One-to-Many) (?)
 
 
 ---
@@ -245,7 +243,7 @@ Description
 ### Relationships 
 
 
-- Reservation → Organisation (Many-to-One)
+- Reservation → Organisation (Many-to-One) (?)
 
 - Reservation → UserAccount (Many-to-One)
 
