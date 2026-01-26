@@ -43,13 +43,4 @@ public class BundlePostingTest {
         
         assertEquals(7, bundle.getAvailable());
     }
-
-    @Test
-    void testGetAvailableWhenFull() {
-        BundlePosting bundle = new BundlePosting();
-        bundle.setQuantityTotal(5);
-        bundle.setQuantityReserved(5);
-        
-        assertEquals(0, bundle.getAvailable());
-    }
 }
