@@ -15,6 +15,11 @@ function emailCheck(email:string) {
     return true;
 }
 
+function getReRoute(checked:boolean){
+  if(checked){return "/dashboard"}
+  else{return "/home"};
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,7 +27,10 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  // for role based login
+  const [checked, setChecked] = useState(false);
   async function handleRegister(e:React.FormEvent) {
+    e.preventDefault();
     // Presence check
     if (!name || !email || !password) {
       setError("All fields are required.");
@@ -39,11 +47,12 @@ export default function RegisterPage() {
         return;
     }
     setLoading(true);
-    const { data, error } = await authClient.signUp.email(
+    const { data, error: signUpError } = await authClient.signUp.email(
       {
         email,
         password,
         name,
+        callbackURL: getReRoute(checked),
       },
       {
         onError: (ctx) => {
@@ -51,10 +60,11 @@ export default function RegisterPage() {
         },
       }
     );
+
     setLoading(false);
-    if(!error){
-        setSuccess(true);
-    }
+    if(signUpError){return;}
+    setEmail(data?.user?.email ?? null);
+    setSuccess(true);
   }
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -108,6 +118,19 @@ export default function RegisterPage() {
             placeholder="Minimum 6 characters"
           />
         </div>
+
+        <div className = "mt-4">
+          <label className="flex items-left gap-2 text-sm">
+            <span>Are you a seller?</span>
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => setChecked(e.target.checked)}
+              className="h-4 w-4 align-middle"
+            />
+          </label>
+        </div>
+
 
         <button
           type="submit"
