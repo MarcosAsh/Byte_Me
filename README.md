@@ -1,3 +1,81 @@
+# Byte Me — Local Setup & Run Guide
+
+
+
+---
+## Setup Instructions
+
+### 1) Clone the repository (?)
+```bash
+git clone <repositoryURL>
+```
+
+
+### 2) Prerequisites
+
+- **Git**
+- **Java 17**
+- **Maven**
+- **Node.js 20** 
+
+### 3) Install required tools (Optional)
+- **macOS using (setup-mac.sh)**
+  ```bash
+  cd scripts
+  chmod +x setup-mac.sh
+  ./setup-mac.sh
+  ```
+
+- **Windows using (setup-windows.ps1)**
+  ```powershell
+  (Run in PowerShell as Administrator)
+  cd scripts
+  .\setup-windows.ps1
+  ```
+
+### 4) Database setup (Pending!)
+
+#### Create the Database `byte_me`
+1) Start PostgreSQL
+2) Create the database:
+```sql
+CREATE DATABASE byte_me;
+```
+
+---
+
+## Run locally
+
+### 1) Start the backend
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+
+### 2) Start the frontend
+```bash
+cd frontend
+npm run dev
+```
+
+**The frontend will start on: 
+http://localhost:3000**
+
+
+-----
+## Environment variables (Pending!)
+
+
+#### Database
+....
+
+
+
+
+---
+
+
 ## API Endpoints
 
 ### Auth

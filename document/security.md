@@ -97,7 +97,7 @@ Security is configured using Spring Security’s `SecurityFilterChain`
 
 CORS is enabled with the following configuration:
 
-- Allowed origins: `http://localhost:5173` & `http://localhost:3000`
+- Allowed origins: `http://localhost:3000`
 
 - Allowed methods: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`
 
