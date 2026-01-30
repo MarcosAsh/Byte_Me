@@ -1,0 +1,577 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+
+% Page Geometry setup
+\geometry{margin=1in}
+
+% Color definitions for code listings
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% JSON language definition for listings (so [language=json] works)
+\lstdefinelanguage{json}{
+  basicstyle=\ttfamily\footnotesize,
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  stepnumber=1,
+  numbersep=5pt,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{backcolour},
+  literate=
+   *{0}{{{\color{codepurple}0}}}{1}
+    {1}{{{\color{codepurple}1}}}{1}
+    {2}{{{\color{codepurple}2}}}{1}
+    {3}{{{\color{codepurple}3}}}{1}
+    {4}{{{\color{codepurple}4}}}{1}
+    {5}{{{\color{codepurple}5}}}{1}
+    {6}{{{\color{codepurple}6}}}{1}
+    {7}{{{\color{codepurple}7}}}{1}
+    {8}{{{\color{codepurple}8}}}{1}
+    {9}{{{\color{codepurple}9}}}{1}
+    {:}{{{\color{magenta}{:}}}}{1}
+    {,}{{{\color{magenta}{,}}}}{1}
+    {\{}{{{\color{magenta}{\{}}}}{1}
+    {\}}{{{\color{magenta}{\}}}}}{1}
+    {[}{{{\color{magenta}{[}}}}{1}
+    {]}{{{\color{magenta}{]}}}}{1}
+}
+
+% Listings configuration (general)
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single
+}
+\lstset{style=mystyle}
+
+\title{\textbf{Controller Documentation}}
+
+\begin{document}
+\maketitle
+
+\section*{Overview}
+This document describes the endpoints of seven \texttt{controller.java} files, including:
+
+\begin{enumerate}[label=\arabic*.]
+    \item AnalyticsController endpoints
+    \item AuthController endpoints
+    \item BundleController endpoints
+    \item CategoryController endpoints
+    \item GamificationController endpoints
+    \item IssueController endpoints
+    \item ReservationController endpoints
+\end{enumerate}
+
+\hrulefill
+
+\section{AnalyticsController}
+\textbf{Base path:} \texttt{/api/analytics}
+
+\subsection{Get seller dashboard metrics}
+\texttt{GET /api/analytics/dashboard/\{sellerId\}}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "sellerName": "ABC",
+  "totalBundlesPosted": 42,
+  "totalQuantity": 180,
+  "collectedCount": 120,
+  "noShowCount": 15,
+  "expiredCount": 5,
+  "sellThroughRate": 66.6,
+  "wasteAvoidedGrams": 36000,
+  "openIssueCount": 2
+}
+\end{lstlisting}
+
+\subsection{Get seller sell-through breakdown}
+\texttt{GET /api/analytics/sell-through/\{sellerId\}}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "collected": 120,
+  "noShow": 15,
+  "expired": 5,
+  "collectionRate": 85.7,
+  "noShowRate": 10.7
+}
+\end{lstlisting}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item \texttt{collectionRate = collected / total * 100}
+    \item \texttt{noShowRate = noShow / total * 100}
+\end{itemize}
+
+\subsection{Get seller waste metrics (with assumptions)}
+\texttt{GET /api/analytics/waste/\{sellerId\}}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "bundlesCollected": 120,
+  "weightSavedGrams": 36000,
+  "co2eSavedKg": 90.0,
+  "mealsSaved": 120,
+  "weightAssumption": "Average bundle weight: 300g",
+  "co2eAssumption": "CO2e factor: 2.5 kg CO2e per kg food waste avoided",
+  "mealsAssumption": "Meals estimate: 1 meal per bundle"
+}
+\end{lstlisting}
+
+\hrulefill
+
+\section{AuthController}
+\textbf{Base path:} \texttt{/api/auth}
+
+\subsection{Register a new user (and optionally create a Seller record)}
+\texttt{POST /api/auth/register}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "email": "seller@example.com",
+  "password": "PlainTextPasswordHere",
+  "role": "SELLER",
+  "businessName": "ABC",
+  "location": "Exeter"
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9....",
+  "userId": "2f3a2c7d-6a1b-4e6a-9c8b-1f2d3c4b5a6e",
+  "email": "seller@example.com",
+  "role": "SELLER"
+}
+\end{lstlisting}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item If role is \texttt{SELLER} and \texttt{businessName != null}, it creates a \texttt{Seller} linked to this user.
+    \item Returns a JWT token in response.
+\end{itemize}
+
+\subsection{Login (get JWT)}
+\texttt{POST /api/auth/login}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "email": "seller@example.com",
+  "password": "PlainTextPasswordHere"
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9....",
+  "userId": "2f3a2c7d-6a1b-4e6a-9c8b-1f2d3c4b5a6e",
+  "email": "seller@example.com",
+  "role": "SELLER"
+}
+\end{lstlisting}
+
+\subsection{Get current user profile (from SecurityContext)}
+\texttt{GET /api/auth/me}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "token": null,
+  "userId": "2f3a2c7d-6a1b-4e6a-9c8b-1f2d3c4b5a6e",
+  "email": "seller@example.com",
+  "role": "SELLER"
+}
+\end{lstlisting}
+
+\hrulefill
+
+\section{BundleController}
+\textbf{Base path:} \texttt{/api/bundles}
+
+\subsection{List available bundles (paged)}
+\texttt{GET /api/bundles}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Returns \texttt{Page<BundlePosting>}
+\end{itemize}
+
+\subsection{Get bundle by id}
+\texttt{GET /api/bundles/\{id\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{BundlePosting}
+\end{itemize}
+
+\subsection{Get bundles by seller id}
+\texttt{GET /api/bundles/seller/\{sellerId\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<BundlePosting>}
+\end{itemize}
+
+\subsection{Create bundle posting}
+\texttt{POST /api/bundles}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "categoryId": "2e5df1b0-1e2c-4a1b-8d71-3d9c5f5d4f90",
+  "pickupStartAt": "2026-01-30T10:00:00Z",
+  "pickupEndAt": "2026-01-30T18:00:00Z",
+  "quantityTotal": 10,
+  "quantityReserved": 1,
+  "priceCents": 899,
+  "discountPct": 30,
+  "contentsText": "Assorted bakery items",
+  "allergensText": "Gluten",
+  "estimatedWeightGrams": 1200,
+  "activate": true
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Saved \texttt{BundlePosting}
+\end{itemize}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item Creates \texttt{BundlePosting} with \texttt{quantityReserved = 0}
+\end{itemize}
+
+\subsection{Update bundle (seller)}
+\texttt{PUT /api/bundles/\{id\}}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "quantityTotal": 12,
+  "priceCents": 799,
+  "discountPct": 40,
+  "contentsText": "Bakery items and sandwiches",
+  "allergensText": "Nuts"
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{BundlePosting}
+\end{itemize}
+
+\subsection{Activate bundle}
+\texttt{POST /api/bundles/\{id\}/activate}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{BundlePosting}
+\end{itemize}
+
+\subsection{Close bundle}
+\texttt{POST /api/bundles/\{id\}/close}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{BundlePosting}
+\end{itemize}
+
+\hrulefill
+
+\section{CategoryController}
+\textbf{Base path:} \texttt{/api/categories}
+
+\subsection{List all categories}
+\texttt{GET /api/categories}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<Category>}
+\end{itemize}
+
+\paragraph{Example Response (JSON):}
+\begin{lstlisting}[language=json]
+[
+  { "categoryId": "11111111-1111-1111-1111-111111111111", "name": "Bakery" },
+  { "categoryId": "22222222-2222-2222-2222-222222222222", "name": "Hot Meals" }
+]
+\end{lstlisting}
+
+\hrulefill
+
+\section{GamificationController}
+\textbf{Base path:} \texttt{/api/gamification}
+
+\subsection{Get an employee's streak stats}
+\texttt{GET /api/gamification/streak/\{employeeId\}}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "currentStreakWeeks": 3,
+  "bestStreakWeeks": 7,
+  "lastRescueWeekStart": "2026-01-26"
+}
+\end{lstlisting}
+
+\subsection{Get an employee's impact summary}
+\texttt{GET /api/gamification/impact/\{employeeId\}}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "totalRescues": 12,
+  "totalMealsSaved": 12,
+  "totalCo2eSavedKg": 4.8,
+  "currentStreakWeeks": 3,
+  "badgesCount": 2
+}
+\end{lstlisting}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item \texttt{totalRescues} values from \texttt{rescueEventRepo.countByEmployee\_EmployeeId}
+    \item \texttt{totalMealsSaved} values from \texttt{rescueEventRepo.sumMealsByEmployee}
+    \item \texttt{totalCo2eSavedKg} values from \texttt{rescueEventRepo.sumCo2eByEmployee / 1000.0}
+\end{itemize}
+
+\subsection{List employee's badges}
+\texttt{GET /api/gamification/badges/\{employeeId\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<EmployeeBadge>}
+\end{itemize}
+
+\subsection{List all badges}
+\texttt{GET /api/gamification/badges}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<Badge>}
+\end{itemize}
+
+\hrulefill
+
+\section{IssueController}
+\textbf{Base path:} \texttt{/api/issues}
+
+\subsection{List all issues for a seller}
+\texttt{GET /api/issues/seller/\{sellerId\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<IssueReport>}
+\end{itemize}
+
+\subsection{List open issues for a seller}
+\texttt{GET /api/issues/seller/\{sellerId\}/open}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<IssueReport>}
+\end{itemize}
+
+\subsection{Create issue}
+\texttt{POST /api/issues}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "postingId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "reservationId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+  "employeeId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "type": "QUALITY",
+  "description": "Item quality was not as described."
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Saved \texttt{IssueReport}
+\end{itemize}
+
+\subsection{Seller respond}
+\texttt{POST /api/issues/\{id\}/respond}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "resolve": true
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{IssueReport}
+\end{itemize}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item Updates status to \texttt{RESPONDED}.
+    \item If \texttt{resolve = true}, sets status to \texttt{RESOLVED} and timestamps \texttt{resolvedAt}.
+\end{itemize}
+
+\subsection{Resolve an issue}
+\texttt{POST /api/issues/\{id\}/resolve}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{IssueReport}
+\end{itemize}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item Sets status to \texttt{RESOLVED}.
+    \item Sets \texttt{resolvedAt = Instant.now()}.
+\end{itemize}
+
+\hrulefill
+
+\section{ReservationController}
+\textbf{Base path:} \texttt{/api/reservations}
+
+\subsection{List reservations by organisation}
+\texttt{GET /api/reservations/org/\{orgId\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<Reservation>}
+\end{itemize}
+
+\subsection{List reservations by employee}
+\texttt{GET /api/reservations/employee/\{employeeId\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item \texttt{List<Reservation>}
+\end{itemize}
+
+\subsection{Create a reservation (generates claim code)}
+\texttt{POST /api/reservations}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "postingId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "organisationId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+  "employeeId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "quantity": 1
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "reservationId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+  "claimCode": "A1B2C3D4E5",
+  "claimCodeLast4": "D4E5",
+  "pickupStartAt": "2026-01-28T10:00:00Z",
+  "pickupEndAt": "2026-01-28T12:00:00Z",
+  "sellerName": "ABC",
+  "locationText": "Exeter"
+}
+\end{lstlisting}
+
+\paragraph{Notes:}
+\textbf{Claim code generation process:}
+\begin{itemize}
+    \item Returns plaintext \texttt{claimCode} in response.
+    \item Stores hash as \texttt{claimCodeHash}.
+    \item Stores \texttt{claimCodeLast4}.
+\end{itemize}
+
+\subsection{Verify claim code}
+\texttt{POST /api/reservations/\{id\}/verify}
+
+\paragraph{Example Request:}
+\begin{lstlisting}[language=json]
+{
+  "claimCode": "A1B2C3D4E5"
+}
+\end{lstlisting}
+
+\paragraph{Example Response:}
+\begin{lstlisting}[language=json]
+{
+  "success": true,
+  "message": "Bundle collected successfully"
+}
+\end{lstlisting}
+
+\subsection{Mark reservation as no-show}
+\texttt{POST /api/reservations/\{id\}/no-show}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{Reservation}
+\end{itemize}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item Sets status to \texttt{NO\_SHOW} and sets \texttt{noShowMarkedAt}.
+    \item Sets \texttt{bundle.quantityReserved -= 1}.
+\end{itemize}
+
+\subsection{Cancel reservation (only if RESERVED)}
+\texttt{POST /api/reservations/\{id\}/cancel}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{Reservation}
+\end{itemize}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item Sets status to \texttt{CANCELLED}.
+    \item Sets \texttt{bundle.quantityReserved -= 1}.
+\end{itemize}
+
+\subsection{Assign an employee to a reservation}
+\texttt{POST /api/reservations/\{id\}/assign/\{employeeId\}}
+
+\paragraph{Example Response:}
+\begin{itemize}
+    \item Updated \texttt{Reservation}
+\end{itemize}
+
+\paragraph{Notes:}
+\begin{itemize}
+    \item Checks reservation and employee exists.
+    \item Sets \texttt{reservation.employee = employee}.
+\end{itemize}
+
+\end{document}
