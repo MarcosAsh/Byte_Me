@@ -90,7 +90,7 @@ CREATE DATABASE byte_me;
 cd backend
 mvn spring-boot:run
 ```
-**The frontend will start on: 
+**The backend will start on: 
 http://localhost:8000**
 
 
