@@ -1,34 +1,37 @@
--- Byte Me — Sprint 1 Database Schema (Complete)
--- Core flow: seller posts bundle → consumer reserves → claim code → collected
--- Gamification: org streaks + org badges
--- Analytics + baseline forecasting support (minimal)
--- Issue reports are Sprint 2 / separate DB (not included here)
+/*
+Byte Me — Sprint 1 schema (Postgres)
+
+What this sets up:
+- Accounts: a single login can be a seller, consumer/org admin, or maintainer.
+- Sellers can post surplus bundles with a pickup window + category.
+- Organisations reserve bundles. A reservation generates a claim code (stored as a hash).
+- When a reservation is marked COLLECTED, you can write a rescue_event (this is the source of truth for impact + streak logic).
+- Org badges are supported (badge definitions + which org has earned what).
+- Minimal forecasting tables for CW1 baseline work (historical observations + forecast runs + outputs).
+- A simple weekly seller metrics cache table for dashboards.
+
+What’s intentionally not here (Sprint 2 / other DB):
+- Issue reports, notifications, employee/membership tables, heavier audit logging, etc.
+
+Notes:
+- Uses pgcrypto for gen_random_uuid().
+- Capacity is enforced with triggers so you can’t oversell bundles.
+*/
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- ============================================================
--- ENUM TYPES
-
--- Account role (Sprint 1: one login per organisation)
 DO $$ BEGIN
   CREATE TYPE user_role AS ENUM ('SELLER', 'CONSUMER', 'ORG_ADMIN', 'MAINTAINER');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Bundle lifecycle
 DO $$ BEGIN
   CREATE TYPE posting_status AS ENUM ('DRAFT', 'ACTIVE', 'CLOSED', 'CANCELLED');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Reservation lifecycle
 DO $$ BEGIN
   CREATE TYPE reservation_status AS ENUM ('RESERVED', 'COLLECTED', 'NO_SHOW', 'EXPIRED', 'CANCELLED');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-
--- ============================================================
--- USERS / AUTH
-
--- Login account used by sellers, consumers, maintainers
 CREATE TABLE IF NOT EXISTS user_account (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -37,11 +40,6 @@ CREATE TABLE IF NOT EXISTS user_account (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-
--- ============================================================
--- SELLERS
-
--- Food sellers who post surplus bundles
 CREATE TABLE IF NOT EXISTS seller (
   seller_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES user_account(user_id) ON DELETE CASCADE,
@@ -52,11 +50,6 @@ CREATE TABLE IF NOT EXISTS seller (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-
--- ============================================================
--- ORGANISATIONS (CONSUMERS)
-
--- Organisations that reserve bundles (Sprint 1: one account per org)
 CREATE TABLE IF NOT EXISTS organisation (
   org_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES user_account(user_id) ON DELETE CASCADE,
@@ -66,7 +59,6 @@ CREATE TABLE IF NOT EXISTS organisation (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Quick access streak values for UI (source-of-truth is rescue_event)
 CREATE TABLE IF NOT EXISTS organisation_streak_cache (
   org_id UUID PRIMARY KEY REFERENCES organisation(org_id) ON DELETE CASCADE,
   current_streak_weeks INT NOT NULL DEFAULT 0,
@@ -75,17 +67,11 @@ CREATE TABLE IF NOT EXISTS organisation_streak_cache (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-
--- ============================================================
--- REFERENCE DATA
-
--- High-level bundle category
 CREATE TABLE IF NOT EXISTS category (
   category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Fixed pickup windows used in filtering + forecasting
 CREATE TABLE IF NOT EXISTS pickup_window (
   window_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   label VARCHAR(50) NOT NULL UNIQUE,
@@ -99,11 +85,6 @@ ALTER TABLE pickup_window
 ALTER TABLE pickup_window
   ADD CONSTRAINT chk_window_order CHECK (end_time > start_time);
 
-
--- ============================================================
--- BUNDLE POSTINGS
-
--- A surplus bundle posted by a seller
 CREATE TABLE IF NOT EXISTS bundle_posting (
   posting_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   seller_id UUID NOT NULL REFERENCES seller(seller_id) ON DELETE CASCADE,
@@ -123,7 +104,6 @@ CREATE TABLE IF NOT EXISTS bundle_posting (
   price_cents INT NOT NULL,
   discount_pct INT NOT NULL DEFAULT 0,
 
-  -- Optional: used for waste avoided estimates in analytics
   estimated_weight_grams INT,
 
   status posting_status NOT NULL DEFAULT 'DRAFT',
@@ -146,11 +126,6 @@ ALTER TABLE bundle_posting
   ADD CONSTRAINT chk_price_nonneg CHECK (price_cents >= 0),
   ADD CONSTRAINT chk_weight_nonneg CHECK (estimated_weight_grams IS NULL OR estimated_weight_grams >= 0);
 
-
--- ============================================================
--- RESERVATIONS
-
--- A reservation for one unit of a bundle
 CREATE TABLE IF NOT EXISTS reservation (
   reservation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   posting_id UUID NOT NULL REFERENCES bundle_posting(posting_id) ON DELETE CASCADE,
@@ -160,7 +135,6 @@ CREATE TABLE IF NOT EXISTS reservation (
   reserved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   status reservation_status NOT NULL DEFAULT 'RESERVED',
 
-  -- Store only hashed codes (plus last4 for UI)
   claim_code_hash VARCHAR(255) NOT NULL,
   claim_code_last4 VARCHAR(4),
 
@@ -170,7 +144,6 @@ CREATE TABLE IF NOT EXISTS reservation (
   cancelled_at TIMESTAMPTZ
 );
 
--- Simple log of status changes (useful for debugging/tests)
 CREATE TABLE IF NOT EXISTS reservation_status_history (
   history_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID NOT NULL REFERENCES reservation(reservation_id) ON DELETE CASCADE,
@@ -180,11 +153,6 @@ CREATE TABLE IF NOT EXISTS reservation_status_history (
   changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-
--- ============================================================
--- RESCUE EVENTS (SOURCE OF TRUTH FOR IMPACT + STREAKS)
-
--- Written once when a reservation is collected
 CREATE TABLE IF NOT EXISTS rescue_event (
   event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID NOT NULL REFERENCES organisation(org_id) ON DELETE CASCADE,
@@ -194,11 +162,6 @@ CREATE TABLE IF NOT EXISTS rescue_event (
   co2e_estimate_grams INT NOT NULL
 );
 
-
--- ============================================================
--- ORG BADGES (AWARDS)
-
--- Badge definitions
 CREATE TABLE IF NOT EXISTS badge (
   badge_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(50) NOT NULL UNIQUE,
@@ -206,7 +169,6 @@ CREATE TABLE IF NOT EXISTS badge (
   description TEXT
 );
 
--- Badges earned by organisations
 CREATE TABLE IF NOT EXISTS organisation_badge (
   org_id UUID NOT NULL REFERENCES organisation(org_id) ON DELETE CASCADE,
   badge_id UUID NOT NULL REFERENCES badge(badge_id) ON DELETE CASCADE,
@@ -214,11 +176,6 @@ CREATE TABLE IF NOT EXISTS organisation_badge (
   PRIMARY KEY (org_id, badge_id)
 );
 
-
--- ============================================================
--- FORECASTING (CW1 BASELINE SUPPORT)
-
--- Historical observations used for training/testing
 CREATE TABLE IF NOT EXISTS demand_observation (
   obs_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   seller_id UUID NOT NULL REFERENCES seller(seller_id) ON DELETE CASCADE,
@@ -232,7 +189,6 @@ CREATE TABLE IF NOT EXISTS demand_observation (
   observed_no_show_rate DOUBLE PRECISION NOT NULL
 );
 
--- Prevent duplicate daily rows for the same bucket
 ALTER TABLE demand_observation
   DROP CONSTRAINT IF EXISTS uq_demand_observation_bucket;
 
@@ -240,7 +196,6 @@ ALTER TABLE demand_observation
   ADD CONSTRAINT uq_demand_observation_bucket
   UNIQUE (seller_id, category_id, window_id, date, discount_pct, weather_flag);
 
--- Metadata for a forecasting run
 CREATE TABLE IF NOT EXISTS forecast_run (
   run_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   model_name VARCHAR(100) NOT NULL,
@@ -253,7 +208,6 @@ CREATE TABLE IF NOT EXISTS forecast_run (
   metrics_json TEXT
 );
 
--- Forecast output for a live posting
 CREATE TABLE IF NOT EXISTS forecast_output (
   output_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   run_id UUID NOT NULL REFERENCES forecast_run(run_id) ON DELETE CASCADE,
@@ -264,11 +218,6 @@ CREATE TABLE IF NOT EXISTS forecast_output (
   rationale_text TEXT
 );
 
-
--- ============================================================
--- SELLER ANALYTICS CACHE (This could be nice to have thoughts?)
-
--- Precomputed weekly seller metrics for dashboards
 CREATE TABLE IF NOT EXISTS seller_metrics_weekly (
   seller_id UUID NOT NULL REFERENCES seller(seller_id) ON DELETE CASCADE,
   week_start DATE NOT NULL,
@@ -282,15 +231,6 @@ CREATE TABLE IF NOT EXISTS seller_metrics_weekly (
   PRIMARY KEY (seller_id, week_start)
 );
 
-
--- ============================================================
--- INTEGRITY RULES (TRIGGERS)
-
--- ----------------------------
--- Role checks (clean data)
-
-
--- Checks a user exists and has an allowed role
 CREATE OR REPLACE FUNCTION assert_user_role(
   p_user_id UUID,
   p_allowed_roles user_role[]
@@ -314,7 +254,6 @@ BEGIN
   END IF;
 END $$;
 
--- Seller rows must reference SELLER accounts
 CREATE OR REPLACE FUNCTION trg_seller_role_check()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -330,7 +269,6 @@ BEFORE INSERT OR UPDATE OF user_id ON seller
 FOR EACH ROW
 EXECUTE FUNCTION trg_seller_role_check();
 
--- Organisation rows must reference CONSUMER/ORG_ADMIN accounts
 CREATE OR REPLACE FUNCTION trg_org_role_check()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -346,11 +284,6 @@ BEFORE INSERT OR UPDATE OF user_id ON organisation
 FOR EACH ROW
 EXECUTE FUNCTION trg_org_role_check();
 
-
--- ----------------------------
--- Reservation capacity (no overselling)
-
--- On reservation insert: check bundle is available and reserve one unit
 CREATE OR REPLACE FUNCTION trg_reservation_capacity_on_insert()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -396,8 +329,6 @@ BEFORE INSERT ON reservation
 FOR EACH ROW
 EXECUTE FUNCTION trg_reservation_capacity_on_insert();
 
-
--- On cancel: free capacity (only when going RESERVED → CANCELLED)
 CREATE OR REPLACE FUNCTION trg_reservation_capacity_on_update()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -420,8 +351,6 @@ BEFORE UPDATE OF status ON reservation
 FOR EACH ROW
 EXECUTE FUNCTION trg_reservation_capacity_on_update();
 
-
--- If a reserved row is deleted: also free capacity
 CREATE OR REPLACE FUNCTION trg_reservation_capacity_on_delete()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -444,11 +373,6 @@ BEFORE DELETE ON reservation
 FOR EACH ROW
 EXECUTE FUNCTION trg_reservation_capacity_on_delete();
 
-
--- ----------------------------
--- Rescue events (collected only)
-
--- Prevent creating a rescue_event unless reservation is COLLECTED
 CREATE OR REPLACE FUNCTION trg_rescue_event_requires_collected()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -477,11 +401,6 @@ BEFORE INSERT ON rescue_event
 FOR EACH ROW
 EXECUTE FUNCTION trg_rescue_event_requires_collected();
 
-
--- -----------------------------------------
--- INDEXES (COMMON QUERIES)
-
--- Bundle browsing
 CREATE INDEX IF NOT EXISTS idx_bundle_posting_status_pickup
   ON bundle_posting (status, pickup_start_at);
 
@@ -491,27 +410,17 @@ CREATE INDEX IF NOT EXISTS idx_bundle_posting_category_window
 CREATE INDEX IF NOT EXISTS idx_bundle_posting_seller_created
   ON bundle_posting (seller_id, created_at);
 
--- Reservations
 CREATE INDEX IF NOT EXISTS idx_reservation_posting_status
   ON reservation (posting_id, status);
 
 CREATE INDEX IF NOT EXISTS idx_reservation_org_reserved_at
   ON reservation (org_id, reserved_at DESC);
 
--- Impact / streaks
 CREATE INDEX IF NOT EXISTS idx_rescue_event_org_collected
   ON rescue_event (org_id, collected_at DESC);
 
--- Forecasting
 CREATE INDEX IF NOT EXISTS idx_forecast_output_posting
   ON forecast_output (posting_id);
 
 CREATE INDEX IF NOT EXISTS idx_demand_observation_seller_date
   ON demand_observation (seller_id, date);
-
-
--- ============================================================
--- Sprint 2 tables omitted:
--- issue reports (separate DB), notifications, employees/memberships,
--- audit logging, normalized allergens/items, etc.
--- ============================================================
