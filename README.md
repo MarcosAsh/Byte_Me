@@ -1,11 +1,29 @@
 # Byte Me — Local Setup & Run Guide
 
+## Overview
+
+Byte Me is a full-stack web application designed to reduce food waste by connecting sellers, organisations, and employees through surplus food bundle reservations.
+
+
+### Key Features:
+
+1. JWT-based authentication with role-based access (Seller / Employee)
+
+2. Bundle management (create / activate / close bundles)
+
+3. Reservation system with verification and no-show tracking
+
+4. Analytics dashboard for sellers (sell-through)
+
+5. Gamification (streaks / badges)
+
+6. Issue reporting
 
 
 ---
 ## Setup Instructions
 
-### 1) Clone the repository (?)
+### 1) Clone the repository
 ```bash
 git clone <repositoryURL>
 ```
@@ -17,6 +35,7 @@ git clone <repositoryURL>
 - **Java 17**
 - **Maven**
 - **Node.js 20** 
+- **PostgreSQL**
 
 ### 3) Install required tools (Optional)
 - **macOS using (setup-mac.sh)**
@@ -33,7 +52,8 @@ git clone <repositoryURL>
   .\setup-windows.ps1
   ```
 
-### 4) Database setup (Pending!)
+
+### 4) Database setup
 
 #### Create the Database `byte_me`
 1) Start PostgreSQL
@@ -42,7 +62,26 @@ git clone <repositoryURL>
 CREATE DATABASE byte_me;
 ```
 
+
+
+
+-----
+
+## Environment variables
+
+### Backend .env variable explanations
+|Variable	|Description|Example|
+|---|---|---|
+|SERVER_PORT|	Port the backend server runs on	|8080|
+|DB_URL	PostgreSQL| JDBC connection URL|	jdbc:postgresql://localhost:5432/byteMe|
+|DB_USERNAME	|PostgreSQL username	|postgres|
+|DB_PASSWORD	|PostgreSQL password	|postgres|
+|JWT_SECRET	|Secret key for signing JWT tokens (≥ 32 bytes)|change-me-to-a-random-string|
+|JWT_EXPIRATION|	JWT expiration time (ms)|	86400000|
+
+
 ---
+
 
 ## Run locally
 
@@ -51,6 +90,8 @@ CREATE DATABASE byte_me;
 cd backend
 mvn spring-boot:run
 ```
+**The frontend will start on: 
+http://localhost:8000**
 
 
 ### 2) Start the frontend
@@ -62,19 +103,7 @@ npm run dev
 **The frontend will start on: 
 http://localhost:3000**
 
-
------
-## Environment variables (Pending!)
-
-
-#### Database
-....
-
-
-
-
 ---
-
 
 ## API Endpoints
 
