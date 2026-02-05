@@ -5,15 +5,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+// Analytics controller
 @RestController
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
 
+    // Repository dependencies
     private final BundlePostingRepository bundleRepo;
     private final ReservationRepository reservationRepo;
     private final IssueReportRepository issueRepo;
     private final SellerRepository sellerRepo;
 
+    // Constructor injection
     public AnalyticsController(BundlePostingRepository bundleRepo, ReservationRepository reservationRepo,
                                 IssueReportRepository issueRepo, SellerRepository sellerRepo) {
         this.bundleRepo = bundleRepo;
@@ -22,14 +25,17 @@ public class AnalyticsController {
         this.sellerRepo = sellerRepo;
     }
 
+    // Get seller dashboard
     @GetMapping("/dashboard/{sellerId}")
     public ResponseEntity<?> getDashboard(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
 
+        // Get bundles and reservations
         var bundles = bundleRepo.findBySeller_SellerId(sellerId);
         var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
 
+        // Calculate metrics
         int totalPosted = bundles.size();
         int totalQuantity = bundles.stream().mapToInt(BundlePosting::getQuantityTotal).sum();
 
@@ -46,10 +52,12 @@ public class AnalyticsController {
         ));
     }
 
+    // Get sell through rate
     @GetMapping("/sell-through/{sellerId}")
     public ResponseEntity<?> getSellThrough(@PathVariable UUID sellerId) {
         var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
 
+        // Calculate rates
         long collected = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.COLLECTED).count();
         long cancelled = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.CANCELLED).count();
         long expired = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.EXPIRED).count();
@@ -63,7 +71,7 @@ public class AnalyticsController {
         ));
     }
 
-    // DTOs
+    // Dashboard response data
     public static class DashboardResponse {
         private String sellerName;
         private int totalBundlesPosted;
@@ -97,6 +105,7 @@ public class AnalyticsController {
         public int getOpenIssueCount() { return openIssueCount; }
     }
 
+    // Sell through response data
     public static class SellThroughResponse {
         private int collected;
         private int cancelled;

@@ -4,42 +4,54 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+// Issue report entity
 @Entity
 @Table(name = "issue_report")
 public class IssueReport {
 
+    // Issue types
     public enum Type { UNAVAILABLE, QUALITY, OTHER }
+    // Issue status types
     public enum Status { OPEN, RESPONDED, RESOLVED }
 
+    // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID issueId;
 
+    // Link to reservation
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
+    // Link to organisation
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "org_id")
     private Organisation organisation;
 
+    // Issue type
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Type type;
 
+    // Issue description
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    // Current status
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.OPEN;
 
+    // Seller response text
     @Column(columnDefinition = "TEXT")
     private String sellerResponse;
 
+    // Creation time
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
+    // Resolution time
     private Instant resolvedAt;
 
     // Getters

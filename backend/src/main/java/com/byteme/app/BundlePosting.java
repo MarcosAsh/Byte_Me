@@ -4,68 +4,87 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+// Food bundle posting entity
 @Entity
 @Table(name = "bundle_posting")
 public class BundlePosting {
 
+    // Bundle status types
     public enum Status { DRAFT, ACTIVE, CLOSED, CANCELLED }
 
+    // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID postingId;
 
+    // Owner seller
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;
 
+    // Food category
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
 
+    // Pickup time window
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "window_id")
     private PickupWindow window;
 
+    // Bundle title
     @Column(nullable = false)
     private String title;
 
+    // Bundle description
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    // Allergen info
     private String allergensText;
 
+    // Pickup start time
     @Column(nullable = false)
     private Instant pickupStartAt;
 
+    // Pickup end time
     @Column(nullable = false)
     private Instant pickupEndAt;
 
+    // Total quantity available
     @Column(nullable = false)
     private Integer quantityTotal = 1;
 
+    // Quantity already reserved
     @Column(nullable = false)
     private Integer quantityReserved = 0;
 
+    // Price in cents
     @Column(nullable = false)
     private Integer priceCents;
 
+    // Discount percentage
     @Column(nullable = false)
     private Integer discountPct = 0;
 
+    // Estimated weight
     private Integer estimatedWeightGrams;
 
+    // Current status
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.DRAFT;
 
+    // Creation time
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    // Helper methods
+    // Check if can reserve
     public boolean canReserve(int qty) {
         return status == Status.ACTIVE && (quantityReserved + qty) <= quantityTotal;
     }
 
+    // Get available quantity
     public int getAvailable() {
         return quantityTotal - quantityReserved;
     }

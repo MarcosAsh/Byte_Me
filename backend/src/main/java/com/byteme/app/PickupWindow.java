@@ -4,20 +4,25 @@ import jakarta.persistence.*;
 import java.time.LocalTime;
 import java.util.UUID;
 
+// Pickup time window entity
 @Entity
 @Table(name = "pickup_window")
 public class PickupWindow {
 
+    // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID windowId;
 
+    // Window label
     @Column(nullable = false, unique = true)
     private String label;
 
+    // Window start time
     @Column(nullable = false)
     private LocalTime startTime;
 
+    // Window end time
     @Column(nullable = false)
     private LocalTime endTime;
 

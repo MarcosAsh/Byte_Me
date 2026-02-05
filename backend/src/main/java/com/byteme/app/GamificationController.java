@@ -7,16 +7,19 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+// Gamification controller
 @RestController
 @RequestMapping("/api/gamification")
 public class GamificationController {
 
+    // Repository dependencies
     private final OrganisationRepository orgRepo;
     private final OrganisationStreakCacheRepository streakRepo;
     private final ReservationRepository reservationRepo;
     private final BadgeRepository badgeRepo;
     private final OrganisationBadgeRepository orgBadgeRepo;
 
+    // Constructor injection
     public GamificationController(OrganisationRepository orgRepo, OrganisationStreakCacheRepository streakRepo,
                                    ReservationRepository reservationRepo, BadgeRepository badgeRepo,
                                    OrganisationBadgeRepository orgBadgeRepo) {
@@ -27,6 +30,7 @@ public class GamificationController {
         this.orgBadgeRepo = orgBadgeRepo;
     }
 
+    // Get org streak
     @GetMapping("/streak/{orgId}")
     public ResponseEntity<?> getStreak(@PathVariable UUID orgId) {
         var org = orgRepo.findById(orgId).orElse(null);
@@ -44,11 +48,13 @@ public class GamificationController {
         ));
     }
 
+    // Get org stats
     @GetMapping("/stats/{orgId}")
     public ResponseEntity<?> getStats(@PathVariable UUID orgId) {
         var org = orgRepo.findById(orgId).orElse(null);
         if (org == null) return ResponseEntity.notFound().build();
 
+        // Calculate stats
         var streak = streakRepo.findById(orgId).orElse(null);
         int badgeCount = orgBadgeRepo.findByOrgId(orgId).size();
         int totalReservations = reservationRepo.findByOrganisationOrgId(orgId).size();
@@ -64,17 +70,19 @@ public class GamificationController {
         ));
     }
 
+    // Get org badges
     @GetMapping("/badges/{orgId}")
     public List<OrganisationBadge> getOrgBadges(@PathVariable UUID orgId) {
         return orgBadgeRepo.findByOrgId(orgId);
     }
 
+    // Get all badges
     @GetMapping("/badges")
     public List<Badge> getAllBadges() {
         return badgeRepo.findAll();
     }
 
-    // DTOs
+    // Streak response data
     public static class StreakResponse {
         private int currentStreakWeeks;
         private int bestStreakWeeks;
@@ -91,6 +99,7 @@ public class GamificationController {
         public LocalDate getLastRescueWeekStart() { return lastRescueWeekStart; }
     }
 
+    // Stats response data
     public static class StatsResponse {
         private int totalReservations;
         private int currentStreakWeeks;

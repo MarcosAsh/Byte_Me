@@ -9,18 +9,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 
+// JWT utility class
 @Component
 public class JwtUtil {
 
+    // Secret key
     private final SecretKey key;
+    // Token expiration time
     private final long expiration;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret, 
+    // Constructor with config values
+    public JwtUtil(@Value("${jwt.secret}") String secret,
                    @Value("${jwt.expiration}") long expiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration;
     }
 
+    // Generate new token
     public String generateToken(UUID userId, String email, UserAccount.Role role) {
         return Jwts.builder()
                 .subject(userId.toString())
@@ -32,6 +37,7 @@ public class JwtUtil {
                 .compact();
     }
 
+    // Parse token claims
     public Claims parseToken(String token) {
         return Jwts.parser()
                 .verifyWith(key)
@@ -40,6 +46,7 @@ public class JwtUtil {
                 .getPayload();
     }
 
+    // Check if token valid
     public boolean isValid(String token) {
         try {
             parseToken(token);
@@ -49,10 +56,12 @@ public class JwtUtil {
         }
     }
 
+    // Get user id from token
     public UUID getUserId(String token) {
         return UUID.fromString(parseToken(token).getSubject());
     }
 
+    // Get role from token
     public UserAccount.Role getRole(String token) {
         return UserAccount.Role.valueOf(parseToken(token).get("role", String.class));
     }

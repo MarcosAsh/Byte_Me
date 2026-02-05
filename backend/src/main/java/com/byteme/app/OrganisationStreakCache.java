@@ -5,26 +5,33 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+// Organisation streak cache entity
 @Entity
 @Table(name = "organisation_streak_cache")
 public class OrganisationStreakCache {
 
+    // Organisation id as primary key
     @Id
     private UUID orgId;
 
+    // Link to organisation
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "org_id")
     private Organisation organisation;
 
+    // Current streak weeks
     @Column(nullable = false)
     private Integer currentStreakWeeks = 0;
 
+    // Best streak weeks
     @Column(nullable = false)
     private Integer bestStreakWeeks = 0;
 
+    // Last rescue week start
     private LocalDate lastRescueWeekStart;
 
+    // Last update time
     @Column(nullable = false)
     private Instant updatedAt = Instant.now();
 

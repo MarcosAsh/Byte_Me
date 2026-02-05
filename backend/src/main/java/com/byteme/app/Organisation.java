@@ -5,25 +5,32 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+// Organisation entity
 @Entity
 @Table(name = "organisation")
 public class Organisation {
 
+    // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID orgId;
 
+    // Link to user account
     @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserAccount user;
 
+    // Organisation name
     @Column(nullable = false)
     private String name;
 
+    // Location info
     private String locationText;
+    // Billing email
     private String billingEmail;
 
+    // Creation time
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
