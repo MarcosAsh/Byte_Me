@@ -2,32 +2,44 @@ name: Backend Tests
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, tests-v2]
     paths:
       - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
   pull_request:
     branches: [master, main]
     paths:
       - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      
+
       - name: Run tests
         working-directory: ./backend
-        run: mvn clean test
-      
-      - name: Build
-        working-directory: ./backend
-        run: mvn clean compile -DskipTests
+        run: mvn clean test -B
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: '**/target/surefire-reports/TEST-*.xml'
+          check_name: Backend Test Results
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: backend/target/surefire-reports/
