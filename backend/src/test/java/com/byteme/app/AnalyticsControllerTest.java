@@ -1,6 +1,5 @@
 package com.byteme.app;
 
-import com.byteme.app.OrgOrder.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,7 +24,7 @@ public class AnalyticsControllerTest {
     @Mock
     private BundlePostingRepository bundleRepo;
     @Mock
-    private OrgOrderRepository orderRepo;
+    private ReservationRepository reservationRepo;
     @Mock
     private IssueReportRepository issueRepo;
     @Mock
@@ -52,11 +51,11 @@ public class AnalyticsControllerTest {
         b1.setQuantityTotal(10);
         when(bundleRepo.findBySeller_SellerId(sellerId)).thenReturn(Collections.singletonList(b1));
 
-        OrgOrder collected1 = new OrgOrder();
-        collected1.setStatus(Status.COLLECTED);
-        OrgOrder collected2 = new OrgOrder();
-        collected2.setStatus(Status.COLLECTED);
-        when(orderRepo.findByPostingSellerSellerId(sellerId))
+        Reservation collected1 = new Reservation();
+        collected1.setStatus(Reservation.Status.COLLECTED);
+        Reservation collected2 = new Reservation();
+        collected2.setStatus(Reservation.Status.COLLECTED);
+        when(reservationRepo.findByPostingSellerSellerId(sellerId))
                 .thenReturn(Arrays.asList(collected1, collected2));
 
         when(issueRepo.findOpenBySeller(sellerId)).thenReturn(Collections.emptyList());
@@ -79,11 +78,11 @@ public class AnalyticsControllerTest {
 
     @Test
     void testGetSellThrough() throws Exception {
-        OrgOrder collected = new OrgOrder();
-        collected.setStatus(Status.COLLECTED);
-        OrgOrder cancelled = new OrgOrder();
-        cancelled.setStatus(Status.CANCELLED);
-        when(orderRepo.findByPostingSellerSellerId(sellerId))
+        Reservation collected = new Reservation();
+        collected.setStatus(Reservation.Status.COLLECTED);
+        Reservation cancelled = new Reservation();
+        cancelled.setStatus(Reservation.Status.CANCELLED);
+        when(reservationRepo.findByPostingSellerSellerId(sellerId))
                 .thenReturn(Arrays.asList(collected, cancelled));
 
         mockMvc.perform(get("/api/analytics/sell-through/" + sellerId))

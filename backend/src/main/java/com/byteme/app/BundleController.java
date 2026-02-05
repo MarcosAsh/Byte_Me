@@ -10,25 +10,30 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+// Bundle posting controller
 @RestController
 @RequestMapping("/api/bundles")
 public class BundleController {
 
+    // Repository dependencies
     private final BundlePostingRepository bundleRepo;
     private final SellerRepository sellerRepo;
     private final CategoryRepository categoryRepo;
 
+    // Constructor injection
     public BundleController(BundlePostingRepository bundleRepo, SellerRepository sellerRepo, CategoryRepository categoryRepo) {
         this.bundleRepo = bundleRepo;
         this.sellerRepo = sellerRepo;
         this.categoryRepo = categoryRepo;
     }
 
+    // Get available bundles
     @GetMapping
     public Page<BundlePosting> getAvailable(Pageable pageable) {
         return bundleRepo.findAvailable(Instant.now(), pageable);
     }
 
+    // Get bundle by id
     @GetMapping("/{id}")
     public ResponseEntity<BundlePosting> getById(@PathVariable UUID id) {
         return bundleRepo.findById(id)
@@ -36,17 +41,21 @@ public class BundleController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Get bundles by seller
     @GetMapping("/seller/{sellerId}")
     public List<BundlePosting> getBySeller(@PathVariable UUID sellerId) {
         return bundleRepo.findBySeller_SellerId(sellerId);
     }
 
+    // Create new bundle
     @PostMapping
     public ResponseEntity<?> create(@RequestBody CreateBundleRequest req) {
+        // Get current seller
         UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         var seller = sellerRepo.findByUserUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Not a seller"));
 
+        // Build bundle entity
         BundlePosting bundle = new BundlePosting();
         bundle.setSeller(seller);
         if (req.getCategoryId() != null) {
@@ -66,16 +75,19 @@ public class BundleController {
         return ResponseEntity.ok(bundleRepo.save(bundle));
     }
 
+    // Update existing bundle
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody UpdateBundleRequest req) {
         var bundle = bundleRepo.findById(id).orElse(null);
         if (bundle == null) return ResponseEntity.notFound().build();
 
+        // Check ownership
         UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!bundle.getSeller().getUser().getUserId().equals(userId)) {
             return ResponseEntity.status(403).body("Not your bundle");
         }
 
+        // Update fields if provided
         if (req.getTitle() != null) bundle.setTitle(req.getTitle());
         if (req.getDescription() != null) bundle.setDescription(req.getDescription());
         if (req.getQuantityTotal() != null) bundle.setQuantityTotal(req.getQuantityTotal());
@@ -86,6 +98,7 @@ public class BundleController {
         return ResponseEntity.ok(bundleRepo.save(bundle));
     }
 
+    // Activate bundle
     @PostMapping("/{id}/activate")
     public ResponseEntity<?> activate(@PathVariable UUID id) {
         var bundle = bundleRepo.findById(id).orElse(null);
@@ -94,6 +107,7 @@ public class BundleController {
         return ResponseEntity.ok(bundleRepo.save(bundle));
     }
 
+    // Close bundle
     @PostMapping("/{id}/close")
     public ResponseEntity<?> close(@PathVariable UUID id) {
         var bundle = bundleRepo.findById(id).orElse(null);
@@ -102,7 +116,7 @@ public class BundleController {
         return ResponseEntity.ok(bundleRepo.save(bundle));
     }
 
-    // DTOs
+    // Create bundle request data
     public static class CreateBundleRequest {
         private UUID categoryId;
         private String title;
@@ -139,6 +153,7 @@ public class BundleController {
         public void setActivate(boolean activate) { this.activate = activate; }
     }
 
+    // Update bundle request data
     public static class UpdateBundleRequest {
         private String title;
         private String description;

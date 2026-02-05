@@ -6,9 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
-import java.time.LocalDate;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,30 +32,24 @@ class OrganisationRepositoryTest {
     }
 
     @Test
-    void testSaveAndRetrieveOrganisationWithGamification() {
+    void testSaveAndRetrieveOrganisation() {
         Organisation org = new Organisation();
         org.setName("Global Food Share");
         org.setUser(sharedUser);
         org.setLocationText("123 Giving Way");
         org.setBillingEmail("finance@charity.org");
-        
-        org.setCurrentStreakWeeks(5);
-        org.setBestStreakWeeks(12);
-        org.setTotalOrders(50);
-        org.setLastOrderWeekStart(LocalDate.now().minusWeeks(1));
 
         Organisation savedOrg = organisationRepo.save(org);
         entityManager.flush();
-        entityManager.clear(); // Force fetch from DB
+        entityManager.clear();
 
         Optional<Organisation> retrieved = organisationRepo.findById(savedOrg.getOrgId());
 
         assertTrue(retrieved.isPresent());
         Organisation found = retrieved.get();
         assertEquals("Global Food Share", found.getName());
-        assertEquals(5, found.getCurrentStreakWeeks());
-        assertEquals(12, found.getBestStreakWeeks());
-        assertEquals(50, found.getTotalOrders());
+        assertEquals("123 Giving Way", found.getLocationText());
+        assertEquals("finance@charity.org", found.getBillingEmail());
         assertEquals(sharedUser.getUserId(), found.getUser().getUserId());
     }
 
@@ -88,8 +80,5 @@ class OrganisationRepositoryTest {
         entityManager.flush();
 
         assertNotNull(saved.getCreatedAt());
-        assertEquals(0, saved.getCurrentStreakWeeks());
-        assertEquals(0, saved.getBestStreakWeeks());
-        assertEquals(0, saved.getTotalOrders());
     }
 }

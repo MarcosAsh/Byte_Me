@@ -7,16 +7,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+// Authentication controller
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    // Repository dependencies
     private final UserAccountRepository userRepo;
     private final SellerRepository sellerRepo;
     private final OrganisationRepository orgRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    // Constructor injection
     public AuthController(UserAccountRepository userRepo, SellerRepository sellerRepo,
                           OrganisationRepository orgRepo, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepo = userRepo;
@@ -26,12 +29,15 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
+    // Register new user
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
+        // Check email exists
         if (userRepo.existsByEmail(req.getEmail())) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
+        // Create user account
         UserAccount user = new UserAccount();
         user.setEmail(req.getEmail());
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
@@ -40,6 +46,7 @@ public class AuthController {
 
         UUID profileId = null;
 
+        // Create seller profile
         if (req.getRole() == UserAccount.Role.SELLER) {
             Seller seller = new Seller();
             seller.setUser(user);
@@ -47,6 +54,7 @@ public class AuthController {
             seller.setLocationText(req.getLocation());
             sellerRepo.save(seller);
             profileId = seller.getSellerId();
+        // Create org profile
         } else if (req.getRole() == UserAccount.Role.ORG_ADMIN) {
             Organisation org = new Organisation();
             org.setUser(user);
@@ -57,18 +65,29 @@ public class AuthController {
             profileId = org.getOrgId();
         }
 
+        // Generate token and respond
         String token = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole());
         return ResponseEntity.ok(new AuthResponse(token, user.getUserId(), profileId, user.getEmail(), user.getRole()));
     }
 
+    // Login user
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
+        // Find user by email
         var user = userRepo.findByEmail(req.getEmail()).orElse(null);
 
+        // Validate credentials
         if (user == null || !passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
 
+        // Validate role matches
+        if (req.getRole() != null && user.getRole() != req.getRole()) {
+            String expectedType = req.getRole() == UserAccount.Role.SELLER ? "seller" : "organization";
+            return ResponseEntity.status(401).body("This account is not a " + expectedType + " account");
+        }
+
+        // Get profile id
         UUID profileId = null;
         if (user.getRole() == UserAccount.Role.SELLER) {
             var seller = sellerRepo.findByUserUserId(user.getUserId()).orElse(null);
@@ -78,15 +97,19 @@ public class AuthController {
             if (org != null) profileId = org.getOrgId();
         }
 
+        // Generate token and respond
         String token = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole());
         return ResponseEntity.ok(new AuthResponse(token, user.getUserId(), profileId, user.getEmail(), user.getRole()));
     }
 
+    // Get current user
     @GetMapping("/me")
     public ResponseEntity<?> me() {
+        // Get user from token
         UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         var user = userRepo.findById(userId).orElseThrow();
 
+        // Get profile id
         UUID profileId = null;
         if (user.getRole() == UserAccount.Role.SELLER) {
             var seller = sellerRepo.findByUserUserId(userId).orElse(null);
@@ -99,7 +122,7 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(null, user.getUserId(), profileId, user.getEmail(), user.getRole()));
     }
 
-    // DTOs
+    // Register request data
     public static class RegisterRequest {
         private String email;
         private String password;
@@ -119,16 +142,21 @@ public class AuthController {
         public void setLocation(String location) { this.location = location; }
     }
 
+    // Login request data
     public static class LoginRequest {
         private String email;
         private String password;
+        private UserAccount.Role role;
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+        public UserAccount.Role getRole() { return role; }
+        public void setRole(UserAccount.Role role) { this.role = role; }
     }
 
+    // Auth response data
     public static class AuthResponse {
         private String token;
         private UUID userId;

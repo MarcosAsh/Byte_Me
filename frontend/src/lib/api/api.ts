@@ -30,7 +30,7 @@ export const authApi = {
   register: (data: { email: string; password: string; role: 'SELLER' | 'ORG_ADMIN'; businessName: string; location?: string }) =>
     fetchApi('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 
-  login: (data: { email: string; password: string }) =>
+  login: (data: { email: string; password: string; role?: 'SELLER' | 'ORG_ADMIN' }) =>
     fetchApi('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
 
   me: (token: string) =>

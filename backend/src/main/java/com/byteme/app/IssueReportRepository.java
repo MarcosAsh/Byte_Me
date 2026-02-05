@@ -9,9 +9,9 @@ public interface IssueReportRepository extends JpaRepository<IssueReport, UUID> 
 
     List<IssueReport> findByOrganisationOrgId(UUID orgId);
 
-    @Query("SELECT i FROM IssueReport i WHERE i.order.posting.seller.sellerId = :sellerId")
+    @Query("SELECT i FROM IssueReport i WHERE i.reservation.posting.seller.sellerId = :sellerId")
     List<IssueReport> findBySeller(UUID sellerId);
 
-    @Query("SELECT i FROM IssueReport i WHERE i.order.posting.seller.sellerId = :sellerId AND i.status = 'OPEN'")
+    @Query("SELECT i FROM IssueReport i WHERE i.reservation.posting.seller.sellerId = :sellerId AND i.status = 'OPEN'")
     List<IssueReport> findOpenBySeller(UUID sellerId);
 }

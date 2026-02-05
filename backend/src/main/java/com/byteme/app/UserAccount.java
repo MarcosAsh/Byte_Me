@@ -5,31 +5,38 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import java.util.UUID;
 
+// User account entity
 @Entity
 @Table(name = "user_account")
 public class UserAccount {
 
+    // User roles
     public enum Role { SELLER, ORG_ADMIN }
 
+    // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID userId;
 
+    // User email
     @Column(nullable = false, unique = true)
     private String email;
 
+    // Hashed password
     @JsonIgnore
     @Column(nullable = false)
     private String passwordHash;
 
+    // User role type
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
+    // Account creation time
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-	/// Getters
+    // Getters
     public UUID getUserId() { return userId; }
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }

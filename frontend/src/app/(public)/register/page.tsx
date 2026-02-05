@@ -1,8 +1,9 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
+import { useAuth } from "@/store/auth.store";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 function emailCheck(email: string) {
   const atSplit = email.split("@");
@@ -12,22 +13,27 @@ function emailCheck(email: string) {
   return true;
 }
 
-function getReRoute(checked: boolean) {
-  if (checked) return "/dashboard";
-  else return "/home";
-}
-
 export default function RegisterPage() {
+  const router = useRouter();
+  const { user, register, init } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // for role based login
-  const [checked, setChecked] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
+  const [location, setLocation] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  useEffect(() => {
+    if (user) {
+      router.push(user.role === "SELLER" ? "/dashboard" : "/home");
+    }
+  }, [user, router]);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -50,25 +56,19 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const { data, error: signUpError } = await authClient.signUp.email({
-      email,
-      password,
-      name,
-      callbackURL: getReRoute(checked),
-    });
-
-    setLoading(false);
-
-    if (signUpError) {
-      setError(signUpError.message ?? "Sign up failed");
-      return;
+    try {
+      await register(
+        email,
+        password,
+        isSeller ? "SELLER" : "ORG_ADMIN",
+        name,
+        location || undefined
+      );
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Sign up failed");
+    } finally {
+      setLoading(false);
     }
-
-    setEmail(data?.user?.email ?? "");
-    setSuccess(true);
-
-    // optional redirect
-    // window.location.href = data?.user?.callbackURL ?? "";
   }
 
   return (
@@ -84,21 +84,16 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="card">
           {error && <div className="alert alert-error">{error}</div>}
-          {success && (
-            <div className="alert alert-success">
-              Account created successfully!
-            </div>
-          )}
 
           <div className="space-y-4">
             <div>
-              <label className="label">Name</label>
+              <label className="label">Business Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input"
-                placeholder="John Doe"
+                placeholder="Your business or organization name"
               />
             </div>
 
@@ -124,11 +119,22 @@ export default function RegisterPage() {
               />
             </div>
 
+            <div>
+              <label className="label">Location (optional)</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="input"
+                placeholder="Your city or address"
+              />
+            </div>
+
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={checked}
-                onChange={(e) => setChecked(e.target.checked)}
+                checked={isSeller}
+                onChange={(e) => setIsSeller(e.target.checked)}
                 className="checkbox"
               />
               <span>I am a seller</span>

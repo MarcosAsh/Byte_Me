@@ -42,16 +42,10 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-[var(--gray-800)]">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-6 text-center">
           <p className="text-sm text-[var(--gray-400)]">
             © {new Date().getFullYear()} Byte Me. All rights reserved.
           </p>
-
-          <div className="flex gap-5 text-[var(--gray-400)]">
-            <Social href="https://twitter.com">Twitter</Social>
-            <Social href="https://linkedin.com">LinkedIn</Social>
-            <Social href="https://instagram.com">Instagram</Social>
-          </div>
         </div>
       </div>
     </footer>
@@ -87,24 +81,5 @@ function FooterLink({
     >
       {children}
     </Link>
-  );
-}
-
-function Social({
-  href,
-  children,
-}: {
-  href: string;
-  children: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm hover:text-[var(--primary)] transition"
-    >
-      {children}
-    </a>
   );
 }

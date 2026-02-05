@@ -1,8 +1,10 @@
 package com.byteme.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.WeekFields;
@@ -10,181 +12,236 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+// Order and reservation controller
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private final OrgOrderRepository orderRepo;
+    // Repository dependencies
+    private final ReservationRepository reservationRepo;
     private final BundlePostingRepository bundleRepo;
     private final OrganisationRepository orgRepo;
+    private final OrganisationStreakCacheRepository streakRepo;
+    private final PasswordEncoder passwordEncoder;
+    private final SecureRandom random = new SecureRandom();
 
-    public OrderController(OrgOrderRepository orderRepo, BundlePostingRepository bundleRepo,
-                           OrganisationRepository orgRepo) {
-        this.orderRepo = orderRepo;
+    // Constructor injection
+    public OrderController(ReservationRepository reservationRepo, BundlePostingRepository bundleRepo,
+                           OrganisationRepository orgRepo, OrganisationStreakCacheRepository streakRepo,
+                           PasswordEncoder passwordEncoder) {
+        this.reservationRepo = reservationRepo;
         this.bundleRepo = bundleRepo;
         this.orgRepo = orgRepo;
+        this.streakRepo = streakRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
+    // Get orders by org
     @GetMapping("/org/{orgId}")
-    public List<OrgOrder> getByOrg(@PathVariable UUID orgId) {
-        return orderRepo.findByOrganisationOrgId(orgId);
+    public List<Reservation> getByOrg(@PathVariable UUID orgId) {
+        return reservationRepo.findByOrganisationOrgId(orgId);
     }
 
+    // Get orders by seller
     @GetMapping("/seller/{sellerId}")
-    public List<OrgOrder> getBySeller(@PathVariable UUID sellerId) {
-        return orderRepo.findByPostingSellerSellerId(sellerId);
+    public List<Reservation> getBySeller(@PathVariable UUID sellerId) {
+        return reservationRepo.findByPostingSellerSellerId(sellerId);
     }
 
+    // Create new order
     @PostMapping
     public ResponseEntity<?> create(@RequestBody CreateOrderRequest req) {
+        // Find bundle
         var bundle = bundleRepo.findById(req.getPostingId()).orElse(null);
         if (bundle == null) return ResponseEntity.notFound().build();
 
-        int qty = req.getQuantity() != null ? req.getQuantity() : 1;
-        if (!bundle.canReserve(qty)) {
-            return ResponseEntity.badRequest().body("Not enough bundles available");
+        // Check availability
+        if (!bundle.canReserve(1)) {
+            return ResponseEntity.badRequest().body("No bundles available");
         }
 
+        // Find organisation
         var org = orgRepo.findById(req.getOrgId()).orElse(null);
         if (org == null) return ResponseEntity.badRequest().body("Organisation not found");
 
-        // Calculate total price
-        int pricePerUnit = bundle.getPriceCents();
-        if (bundle.getDiscountPct() > 0) {
-            pricePerUnit = pricePerUnit - (pricePerUnit * bundle.getDiscountPct() / 100);
-        }
-        int totalPrice = pricePerUnit * qty;
+        // Generate claim code
+        String claimCode = String.format("%06d", random.nextInt(1000000));
+        String claimCodeHash = passwordEncoder.encode(claimCode);
+        String claimCodeLast4 = claimCode.substring(claimCode.length() - 4);
 
-        OrgOrder order = new OrgOrder();
-        order.setOrganisation(org);
-        order.setPosting(bundle);
-        order.setQuantity(qty);
-        order.setTotalPriceCents(totalPrice);
+        // Create reservation
+        Reservation reservation = new Reservation();
+        reservation.setOrganisation(org);
+        reservation.setPosting(bundle);
+        reservation.setClaimCodeHash(claimCodeHash);
+        reservation.setClaimCodeLast4(claimCodeLast4);
 
-        bundle.setQuantityReserved(bundle.getQuantityReserved() + qty);
+        // Update bundle quantity
+        bundle.setQuantityReserved(bundle.getQuantityReserved() + 1);
         bundleRepo.save(bundle);
 
-        var saved = orderRepo.save(order);
+        var saved = reservationRepo.save(reservation);
 
+        // Return order response
         return ResponseEntity.ok(new OrderResponse(
-                saved.getOrderId(),
-                saved.getQuantity(),
-                saved.getTotalPriceCents(),
+                saved.getReservationId(),
+                1,
+                bundle.getPriceCents(),
                 bundle.getPickupStartAt(),
                 bundle.getPickupEndAt(),
                 bundle.getSeller().getName(),
-                bundle.getSeller().getLocationText()
+                bundle.getSeller().getLocationText(),
+                claimCode
         ));
     }
 
+    // Collect order
     @PostMapping("/{id}/collect")
     @org.springframework.transaction.annotation.Transactional
-    public ResponseEntity<?> collect(@PathVariable UUID id) {
-        var order = orderRepo.findById(id).orElse(null);
-        if (order == null) return ResponseEntity.notFound().build();
+    public ResponseEntity<?> collect(@PathVariable UUID id, @RequestBody(required = false) ClaimRequest claimReq) {
+        // Find reservation
+        var reservation = reservationRepo.findById(id).orElse(null);
+        if (reservation == null) return ResponseEntity.notFound().build();
 
-        if (order.getStatus() != OrgOrder.Status.RESERVED) {
-            return ResponseEntity.badRequest().body("Order not in RESERVED status");
+        // Check status
+        if (reservation.getStatus() != Reservation.Status.RESERVED) {
+            return ResponseEntity.badRequest().body("Reservation not in RESERVED status");
         }
 
-        order.setStatus(OrgOrder.Status.COLLECTED);
-        order.setCollectedAt(Instant.now());
-        orderRepo.save(order);
+        // Verify claim code
+        if (claimReq != null && claimReq.getClaimCode() != null) {
+            if (!passwordEncoder.matches(claimReq.getClaimCode(), reservation.getClaimCodeHash())) {
+                return ResponseEntity.badRequest().body("Invalid claim code");
+            }
+        }
 
-        // Update org streak - fetch org within transaction
-        var org = order.getOrganisation();
+        // Mark as collected
+        reservation.setStatus(Reservation.Status.COLLECTED);
+        reservation.setCollectedAt(Instant.now());
+        reservationRepo.save(reservation);
+
+        // Update org streak
+        var org = reservation.getOrganisation();
         updateOrgStreak(org);
 
-        return ResponseEntity.ok(new CollectResponse(true, "Order collected successfully"));
+        return ResponseEntity.ok(new CollectResponse(true, "Reservation collected successfully"));
     }
 
+    // Cancel order
     @PostMapping("/{id}/cancel")
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> cancel(@PathVariable UUID id) {
-        var order = orderRepo.findById(id).orElse(null);
-        if (order == null) return ResponseEntity.notFound().build();
+        // Find reservation
+        var reservation = reservationRepo.findById(id).orElse(null);
+        if (reservation == null) return ResponseEntity.notFound().build();
 
-        if (order.getStatus() != OrgOrder.Status.RESERVED) {
-            return ResponseEntity.badRequest().body("Can only cancel RESERVED orders");
+        // Check status
+        if (reservation.getStatus() != Reservation.Status.RESERVED) {
+            return ResponseEntity.badRequest().body("Can only cancel RESERVED reservations");
         }
 
-        order.setStatus(OrgOrder.Status.CANCELLED);
-        order.setCancelledAt(Instant.now());
+        // Mark as cancelled
+        reservation.setStatus(Reservation.Status.CANCELLED);
+        reservation.setCancelledAt(Instant.now());
 
-        var bundle = order.getPosting();
-        bundle.setQuantityReserved(bundle.getQuantityReserved() - order.getQuantity());
+        // Release bundle quantity
+        var bundle = reservation.getPosting();
+        bundle.setQuantityReserved(bundle.getQuantityReserved() - 1);
         bundleRepo.save(bundle);
 
-        return ResponseEntity.ok(orderRepo.save(order));
+        return ResponseEntity.ok(reservationRepo.save(reservation));
     }
 
+    // Update organisation streak
     private void updateOrgStreak(Organisation org) {
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1);
 
-        if (org.getLastOrderWeekStart() == null) {
-            org.setCurrentStreakWeeks(1);
-        } else if (org.getLastOrderWeekStart().equals(weekStart)) {
-            // Same week, no change to streak
-        } else if (org.getLastOrderWeekStart().plusWeeks(1).equals(weekStart)) {
-            org.setCurrentStreakWeeks(org.getCurrentStreakWeeks() + 1);
+        var streakOpt = streakRepo.findById(org.getOrgId());
+        OrganisationStreakCache streak;
+
+        // Create or update streak
+        if (streakOpt.isEmpty()) {
+            streak = new OrganisationStreakCache();
+            streak.setOrganisation(org);
+            streak.setCurrentStreakWeeks(1);
+            streak.setLastRescueWeekStart(weekStart);
         } else {
-            org.setCurrentStreakWeeks(1);
+            streak = streakOpt.get();
+            if (streak.getLastRescueWeekStart() == null) {
+                streak.setCurrentStreakWeeks(1);
+            } else if (streak.getLastRescueWeekStart().equals(weekStart)) {
+                // Same week no change
+            } else if (streak.getLastRescueWeekStart().plusWeeks(1).equals(weekStart)) {
+                streak.setCurrentStreakWeeks(streak.getCurrentStreakWeeks() + 1);
+            } else {
+                streak.setCurrentStreakWeeks(1);
+            }
+            streak.setLastRescueWeekStart(weekStart);
         }
 
-        org.setLastOrderWeekStart(weekStart);
-        org.setTotalOrders(org.getTotalOrders() + 1);
-
-        if (org.getCurrentStreakWeeks() > org.getBestStreakWeeks()) {
-            org.setBestStreakWeeks(org.getCurrentStreakWeeks());
+        // Update best streak
+        if (streak.getCurrentStreakWeeks() > streak.getBestStreakWeeks()) {
+            streak.setBestStreakWeeks(streak.getCurrentStreakWeeks());
         }
 
-        orgRepo.save(org);
+        streak.setUpdatedAt(Instant.now());
+        streakRepo.save(streak);
     }
 
-    // DTOs
+    // Create order request data
     public static class CreateOrderRequest {
         private UUID postingId;
         private UUID orgId;
-        private Integer quantity;
 
         public UUID getPostingId() { return postingId; }
         public void setPostingId(UUID postingId) { this.postingId = postingId; }
         public UUID getOrgId() { return orgId; }
         public void setOrgId(UUID orgId) { this.orgId = orgId; }
-        public Integer getQuantity() { return quantity; }
-        public void setQuantity(Integer quantity) { this.quantity = quantity; }
     }
 
+    // Claim code request data
+    public static class ClaimRequest {
+        private String claimCode;
+        public String getClaimCode() { return claimCode; }
+        public void setClaimCode(String claimCode) { this.claimCode = claimCode; }
+    }
+
+    // Order response data
     public static class OrderResponse {
-        private UUID orderId;
+        private UUID reservationId;
         private Integer quantity;
-        private Integer totalPriceCents;
+        private Integer priceCents;
         private Instant pickupStartAt;
         private Instant pickupEndAt;
         private String sellerName;
         private String sellerLocation;
+        private String claimCode;
 
-        public OrderResponse(UUID orderId, Integer quantity, Integer totalPriceCents,
-                             Instant pickupStartAt, Instant pickupEndAt, String sellerName, String sellerLocation) {
-            this.orderId = orderId;
+        public OrderResponse(UUID reservationId, Integer quantity, Integer priceCents,
+                             Instant pickupStartAt, Instant pickupEndAt, String sellerName,
+                             String sellerLocation, String claimCode) {
+            this.reservationId = reservationId;
             this.quantity = quantity;
-            this.totalPriceCents = totalPriceCents;
+            this.priceCents = priceCents;
             this.pickupStartAt = pickupStartAt;
             this.pickupEndAt = pickupEndAt;
             this.sellerName = sellerName;
             this.sellerLocation = sellerLocation;
+            this.claimCode = claimCode;
         }
 
-        public UUID getOrderId() { return orderId; }
+        public UUID getReservationId() { return reservationId; }
         public Integer getQuantity() { return quantity; }
-        public Integer getTotalPriceCents() { return totalPriceCents; }
+        public Integer getPriceCents() { return priceCents; }
         public Instant getPickupStartAt() { return pickupStartAt; }
         public Instant getPickupEndAt() { return pickupEndAt; }
         public String getSellerName() { return sellerName; }
         public String getSellerLocation() { return sellerLocation; }
+        public String getClaimCode() { return claimCode; }
     }
 
+    // Collect response data
     public static class CollectResponse {
         private boolean success;
         private String message;

@@ -5,37 +5,43 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+// Analytics controller
 @RestController
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
 
+    // Repository dependencies
     private final BundlePostingRepository bundleRepo;
-    private final OrgOrderRepository orderRepo;
+    private final ReservationRepository reservationRepo;
     private final IssueReportRepository issueRepo;
     private final SellerRepository sellerRepo;
 
-    public AnalyticsController(BundlePostingRepository bundleRepo, OrgOrderRepository orderRepo,
+    // Constructor injection
+    public AnalyticsController(BundlePostingRepository bundleRepo, ReservationRepository reservationRepo,
                                 IssueReportRepository issueRepo, SellerRepository sellerRepo) {
         this.bundleRepo = bundleRepo;
-        this.orderRepo = orderRepo;
+        this.reservationRepo = reservationRepo;
         this.issueRepo = issueRepo;
         this.sellerRepo = sellerRepo;
     }
 
+    // Get seller dashboard
     @GetMapping("/dashboard/{sellerId}")
     public ResponseEntity<?> getDashboard(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
 
+        // Get bundles and reservations
         var bundles = bundleRepo.findBySeller_SellerId(sellerId);
-        var orders = orderRepo.findByPostingSellerSellerId(sellerId);
+        var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
 
+        // Calculate metrics
         int totalPosted = bundles.size();
         int totalQuantity = bundles.stream().mapToInt(BundlePosting::getQuantityTotal).sum();
 
-        long collectedCount = orders.stream().filter(o -> o.getStatus() == OrgOrder.Status.COLLECTED).count();
-        long cancelledCount = orders.stream().filter(o -> o.getStatus() == OrgOrder.Status.CANCELLED).count();
-        long expiredCount = orders.stream().filter(o -> o.getStatus() == OrgOrder.Status.EXPIRED).count();
+        long collectedCount = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.COLLECTED).count();
+        long cancelledCount = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.CANCELLED).count();
+        long expiredCount = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.EXPIRED).count();
 
         double sellThrough = totalQuantity > 0 ? (double) collectedCount / totalQuantity * 100 : 0;
         int openIssues = issueRepo.findOpenBySeller(sellerId).size();
@@ -46,13 +52,15 @@ public class AnalyticsController {
         ));
     }
 
+    // Get sell through rate
     @GetMapping("/sell-through/{sellerId}")
     public ResponseEntity<?> getSellThrough(@PathVariable UUID sellerId) {
-        var orders = orderRepo.findByPostingSellerSellerId(sellerId);
+        var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
 
-        long collected = orders.stream().filter(o -> o.getStatus() == OrgOrder.Status.COLLECTED).count();
-        long cancelled = orders.stream().filter(o -> o.getStatus() == OrgOrder.Status.CANCELLED).count();
-        long expired = orders.stream().filter(o -> o.getStatus() == OrgOrder.Status.EXPIRED).count();
+        // Calculate rates
+        long collected = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.COLLECTED).count();
+        long cancelled = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.CANCELLED).count();
+        long expired = reservations.stream().filter(r -> r.getStatus() == Reservation.Status.EXPIRED).count();
 
         long total = collected + cancelled + expired;
 
@@ -63,7 +71,7 @@ public class AnalyticsController {
         ));
     }
 
-    // DTOs
+    // Dashboard response data
     public static class DashboardResponse {
         private String sellerName;
         private int totalBundlesPosted;
@@ -97,6 +105,7 @@ public class AnalyticsController {
         public int getOpenIssueCount() { return openIssueCount; }
     }
 
+    // Sell through response data
     public static class SellThroughResponse {
         private int collected;
         private int cancelled;

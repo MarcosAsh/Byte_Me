@@ -1,75 +1,66 @@
-/*Login Page - org, seller & maintainer*/
 "use client";
 
-import { authClient } from "@/lib/auth-client";
-import {useState} from "react";
+import { useAuth } from "@/store/auth.store";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-function emailCheck(email:string) {
-    const atSplit = email.split('@');
-    if(atSplit.length != 2){
-        return false;
-    }
-    const dotSplit = atSplit[1].split('.');
-    if(dotSplit.length < 2){
-        return false;
-    }
-    return true;
+function emailCheck(email: string) {
+  const atSplit = email.split("@");
+  if (atSplit.length !== 2) return false;
+  const dotSplit = atSplit[1].split(".");
+  if (dotSplit.length < 2) return false;
+  return true;
 }
 
-function getReRoute(checked:boolean){
-  if(checked){return "/dashboard"}
-  else{return "/home"};
-}
-
-export default function LoginPage(){
+export default function LoginPage() {
+  const router = useRouter();
+  const { user, login, init } = useAuth();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");    
+  const [password, setPassword] = useState("");
+  const [isSeller, setIsSeller] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);  
-  // for role based login
-  const [checked, setChecked] = useState(false);  
-  async function handleLogin(e:React.FormEvent){
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  useEffect(() => {
+    if (user) {
+      router.push("/home");
+    }
+  }, [user, router]);
+
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    // Presence check
+    setError(null);
+
     if (!email || !password) {
       setError("All fields are required.");
       return;
     }
-    // length check
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
     }
-    // email format check
-    if (!emailCheck(email)){
-        setError("Invalid email format.");
-        return;
+
+    if (!emailCheck(email)) {
+      setError("Invalid email format.");
+      return;
     }
+
     setLoading(true);
-    const { data, error: signInError } = await authClient.signIn.email(
-      {
-        email,
-        password,
-        callbackURL: getReRoute(checked),
-      },
-      {
-        onError: (ctx) => {
-          setError(ctx.error.message);
-        },
-      }
-    );
-    setLoading(false);
-    if(signInError){
-        setError(signInError.message ?? "Login failed");
-        return;
+    try {
+      await login(email, password, isSeller ? "SELLER" : "ORG_ADMIN");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoading(false);
     }
-    setEmail(data?.user?.email ?? null);
-    setSuccess(true);
-    // optional redirect
-    // window.location.href = data?.user?.callbackURL ?? "";
   }
+
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -83,11 +74,6 @@ export default function LoginPage(){
 
         <form onSubmit={handleLogin} className="card">
           {error && <div className="alert alert-error">{error}</div>}
-          {success && (
-            <div className="alert alert-success">
-              You are now logged in!
-            </div>
-          )}
 
           <div className="space-y-4">
             <div>
@@ -115,8 +101,8 @@ export default function LoginPage(){
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={checked}
-                onChange={(e) => setChecked(e.target.checked)}
+                checked={isSeller}
+                onChange={(e) => setIsSeller(e.target.checked)}
                 className="checkbox"
               />
               <span>I am a seller</span>
@@ -132,7 +118,7 @@ export default function LoginPage(){
           </button>
 
           <p className="auth-footer">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="link">
               Sign Up
             </Link>

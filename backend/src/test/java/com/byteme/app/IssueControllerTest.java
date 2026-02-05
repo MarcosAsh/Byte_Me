@@ -33,7 +33,7 @@ class IssueControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock private IssueReportRepository issueRepo;
-    @Mock private OrgOrderRepository orderRepo;
+    @Mock private ReservationRepository reservationRepo;
     @Mock private OrganisationRepository orgRepo;
 
     @InjectMocks
@@ -42,7 +42,7 @@ class IssueControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        
+
         ObjectMapper testMapper = new ObjectMapper();
         testMapper.registerModule(new JavaTimeModule());
         testMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -83,14 +83,14 @@ class IssueControllerTest {
     @Test
     void testCreateIssue() throws Exception {
         IssueController.CreateIssueRequest req = new IssueController.CreateIssueRequest();
-        req.setOrderId(UUID.randomUUID());
+        req.setReservationId(UUID.randomUUID());
         req.setDescription("Missing items");
-        
+
         if (IssueReport.Type.values().length > 0) {
             req.setType(IssueReport.Type.values()[0]);
         }
 
-        when(orderRepo.findById(any())).thenReturn(Optional.of(new OrgOrder()));
+        when(reservationRepo.findById(any())).thenReturn(Optional.of(new Reservation()));
         when(issueRepo.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
         mockMvc.perform(post("/api/issues")
@@ -117,7 +117,6 @@ class IssueControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                // Verify logic: resolvedAt should exist because req.resolve was true
                 .andExpect(jsonPath("$.status").value("RESOLVED"))
                 .andExpect(jsonPath("$.resolvedAt").exists());
     }

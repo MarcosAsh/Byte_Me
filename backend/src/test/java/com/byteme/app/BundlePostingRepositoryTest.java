@@ -1,6 +1,7 @@
 package com.byteme.app;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,8 @@ class BundlePostingRepositoryTest {
     private BundlePostingRepository bundleRepo;
 
     private Seller sharedSeller;
+    private Category sharedCategory;
+    private PickupWindow sharedWindow;
 
     @BeforeEach
     void setUp() {
@@ -38,17 +41,34 @@ class BundlePostingRepositoryTest {
         sharedSeller.setUser(user);
         entityManager.persist(sharedSeller);
 
+        sharedCategory = new Category();
+        sharedCategory.setName("Test Category " + UUID.randomUUID());
+        entityManager.persist(sharedCategory);
+
+        sharedWindow = new PickupWindow();
+        sharedWindow.setLabel("Test Window " + UUID.randomUUID());
+        sharedWindow.setStartTime(LocalTime.of(9, 0));
+        sharedWindow.setEndTime(LocalTime.of(17, 0));
+        entityManager.persist(sharedWindow);
+
         entityManager.flush();
+    }
+
+    private BundlePosting createBundlePosting(String title, Integer priceCents, Instant pickupStart, Instant pickupEnd) {
+        BundlePosting bp = new BundlePosting();
+        bp.setSeller(sharedSeller);
+        bp.setCategory(sharedCategory);
+        bp.setWindow(sharedWindow);
+        bp.setTitle(title);
+        bp.setPriceCents(priceCents);
+        bp.setPickupStartAt(pickupStart);
+        bp.setPickupEndAt(pickupEnd);
+        return bp;
     }
 
     @Test
     void testFindBySeller_SellerId() {
-        BundlePosting b1 = new BundlePosting();
-        b1.setSeller(sharedSeller);
-        b1.setTitle("Item 1");
-        b1.setPriceCents(100);
-        b1.setPickupStartAt(Instant.now());
-        b1.setPickupEndAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        BundlePosting b1 = createBundlePosting("Item 1", 100, Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
         entityManager.persist(b1);
 
         entityManager.flush();
@@ -62,48 +82,28 @@ class BundlePostingRepositoryTest {
     void testFindAvailable_FiltersCorrectly() {
         Instant now = Instant.now();
 
-        BundlePosting available = new BundlePosting();
-        available.setSeller(sharedSeller);
-        available.setTitle("Available");
+        BundlePosting available = createBundlePosting("Available", 100, now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS));
         available.setStatus(BundlePosting.Status.ACTIVE);
         available.setQuantityTotal(5);
         available.setQuantityReserved(0);
-        available.setPickupStartAt(now.minus(1, ChronoUnit.HOURS));
-        available.setPickupEndAt(now.plus(1, ChronoUnit.HOURS));
-        available.setPriceCents(100);
         entityManager.persist(available);
 
-        BundlePosting soldOut = new BundlePosting();
-        soldOut.setSeller(sharedSeller);
-        soldOut.setTitle("Sold Out");
+        BundlePosting soldOut = createBundlePosting("Sold Out", 100, now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS));
         soldOut.setStatus(BundlePosting.Status.ACTIVE);
         soldOut.setQuantityTotal(5);
         soldOut.setQuantityReserved(5);
-        soldOut.setPickupStartAt(now.minus(1, ChronoUnit.HOURS));
-        soldOut.setPickupEndAt(now.plus(1, ChronoUnit.HOURS));
-        soldOut.setPriceCents(100);
         entityManager.persist(soldOut);
 
-        BundlePosting draft = new BundlePosting();
-        draft.setSeller(sharedSeller);
-        draft.setTitle("Draft");
+        BundlePosting draft = createBundlePosting("Draft", 100, now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS));
         draft.setStatus(BundlePosting.Status.DRAFT);
         draft.setQuantityTotal(5);
         draft.setQuantityReserved(0);
-        draft.setPickupStartAt(now.minus(1, ChronoUnit.HOURS));
-        draft.setPickupEndAt(now.plus(1, ChronoUnit.HOURS));
-        draft.setPriceCents(100);
         entityManager.persist(draft);
 
-        BundlePosting past = new BundlePosting();
-        past.setSeller(sharedSeller);
-        past.setTitle("Past");
+        BundlePosting past = createBundlePosting("Past", 100, now.minus(5, ChronoUnit.HOURS), now.minus(1, ChronoUnit.HOURS));
         past.setStatus(BundlePosting.Status.ACTIVE);
         past.setQuantityTotal(5);
         past.setQuantityReserved(0);
-        past.setPickupStartAt(now.minus(5, ChronoUnit.HOURS));
-        past.setPickupEndAt(now.minus(1, ChronoUnit.HOURS));
-        past.setPriceCents(100);
         entityManager.persist(past);
 
         entityManager.flush();
@@ -117,22 +117,12 @@ class BundlePostingRepositoryTest {
     void testFindExpired() {
         Instant now = Instant.now();
 
-        BundlePosting expired = new BundlePosting();
-        expired.setSeller(sharedSeller);
-        expired.setTitle("Expired");
+        BundlePosting expired = createBundlePosting("Expired", 100, now.minus(10, ChronoUnit.HOURS), now.minus(2, ChronoUnit.HOURS));
         expired.setStatus(BundlePosting.Status.ACTIVE);
-        expired.setPickupStartAt(now.minus(10, ChronoUnit.HOURS));
-        expired.setPickupEndAt(now.minus(2, ChronoUnit.HOURS)); // Is in the past
-        expired.setPriceCents(100);
         entityManager.persist(expired);
 
-        BundlePosting notExpired = new BundlePosting();
-        notExpired.setSeller(sharedSeller);
-        notExpired.setTitle("Not Expired");
+        BundlePosting notExpired = createBundlePosting("Not Expired", 100, now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS));
         notExpired.setStatus(BundlePosting.Status.ACTIVE);
-        notExpired.setPickupStartAt(now.minus(1, ChronoUnit.HOURS));
-        notExpired.setPickupEndAt(now.plus(1, ChronoUnit.HOURS)); // Is in the future
-        notExpired.setPriceCents(100);
         entityManager.persist(notExpired);
 
         entityManager.flush();
@@ -144,12 +134,7 @@ class BundlePostingRepositoryTest {
 
     @Test
     void testCountBySeller() {
-        BundlePosting b1 = new BundlePosting();
-        b1.setSeller(sharedSeller);
-        b1.setTitle("B1");
-        b1.setPriceCents(100);
-        b1.setPickupStartAt(Instant.now());
-        b1.setPickupEndAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        BundlePosting b1 = createBundlePosting("B1", 100, Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
         entityManager.persist(b1);
 
         entityManager.flush();

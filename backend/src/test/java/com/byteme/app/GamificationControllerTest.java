@@ -29,7 +29,8 @@ class GamificationControllerTest {
     private MockMvc mockMvc;
 
     @Mock private OrganisationRepository orgRepo;
-    @Mock private OrgOrderRepository orderRepo;
+    @Mock private OrganisationStreakCacheRepository streakRepo;
+    @Mock private ReservationRepository reservationRepo;
     @Mock private BadgeRepository badgeRepo;
     @Mock private OrganisationBadgeRepository orgBadgeRepo;
 
@@ -53,35 +54,43 @@ class GamificationControllerTest {
     void testGetStreak_Success() throws Exception {
         UUID orgId = UUID.randomUUID();
         Organisation org = new Organisation();
-        org.setCurrentStreakWeeks(5);
-        org.setBestStreakWeeks(10);
-        org.setLastOrderWeekStart(LocalDate.of(2023, 10, 1));
+
+        OrganisationStreakCache streak = new OrganisationStreakCache();
+        streak.setCurrentStreakWeeks(5);
+        streak.setBestStreakWeeks(10);
+        streak.setLastRescueWeekStart(LocalDate.of(2023, 10, 1));
 
         when(orgRepo.findById(orgId)).thenReturn(Optional.of(org));
+        when(streakRepo.findById(orgId)).thenReturn(Optional.of(streak));
 
         mockMvc.perform(get("/api/gamification/streak/{orgId}", orgId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.currentStreakWeeks").value(5))
                 .andExpect(jsonPath("$.bestStreakWeeks").value(10))
-                .andExpect(jsonPath("$.lastOrderWeekStart").value("2023-10-01"));
+                .andExpect(jsonPath("$.lastRescueWeekStart").value("2023-10-01"));
     }
 
     @Test
     void testGetStats_Success() throws Exception {
         UUID orgId = UUID.randomUUID();
         Organisation org = new Organisation();
-        org.setTotalOrders(50);
-        org.setCurrentStreakWeeks(3);
-        org.setBestStreakWeeks(8);
+
+        OrganisationStreakCache streak = new OrganisationStreakCache();
+        streak.setCurrentStreakWeeks(3);
+        streak.setBestStreakWeeks(8);
 
         when(orgRepo.findById(orgId)).thenReturn(Optional.of(org));
-        
+        when(streakRepo.findById(orgId)).thenReturn(Optional.of(streak));
+        when(reservationRepo.findByOrganisationOrgId(orgId)).thenReturn(
+                Collections.nCopies(50, new Reservation())
+        );
+
         OrganisationBadge badge = new OrganisationBadge();
         when(orgBadgeRepo.findByOrgId(orgId)).thenReturn(Collections.singletonList(badge));
 
         mockMvc.perform(get("/api/gamification/stats/{orgId}", orgId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalOrders").value(50))
+                .andExpect(jsonPath("$.totalReservations").value(50))
                 .andExpect(jsonPath("$.currentStreakWeeks").value(3))
                 .andExpect(jsonPath("$.badgesEarned").value(1));
     }
@@ -107,16 +116,16 @@ class GamificationControllerTest {
     @Test
     void testDTOFullCoverage() {
         LocalDate date = LocalDate.of(2026, 2, 1);
-        
+
         GamificationController.StreakResponse streak = new GamificationController.StreakResponse(2, 5, date);
-        
+
         assertEquals(2, streak.getCurrentStreakWeeks());
         assertEquals(5, streak.getBestStreakWeeks());
-        assertEquals(date, streak.getLastOrderWeekStart());
-        
+        assertEquals(date, streak.getLastRescueWeekStart());
+
         GamificationController.StatsResponse stats = new GamificationController.StatsResponse(100, 10, 20, 15);
-        
-        assertEquals(100, stats.getTotalOrders());
+
+        assertEquals(100, stats.getTotalReservations());
         assertEquals(10, stats.getCurrentStreakWeeks());
         assertEquals(20, stats.getBestStreakWeeks());
         assertEquals(15, stats.getBadgesEarned());
