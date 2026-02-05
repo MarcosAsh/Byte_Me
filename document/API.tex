@@ -74,7 +74,10 @@ Including these seven controllers:
 \section{ AuthController (\texttt{/api/auth})}
 
 \subsection{Register}
-\textbf{POST} \texttt{/api/auth/register}
+\textbf{Purpose:} \\ \texttt Register a new user account and create a profile for a specific role. \\
+
+\textbf{POST} \texttt{/api/auth/register} \\
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X POST http://localhost:8080/api/auth/register \
@@ -100,7 +103,10 @@ curl -X POST http://localhost:8080/api/auth/register \
 \end{lstlisting}
 
 \subsection {Login}
+\textbf{Purpose:} \\ \texttt Authenticates a user and issues a JWT. \\
+
 \textbf{POST} \texttt{/api/auth/login}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X POST http://localhost:8080/api/auth/login \
@@ -124,7 +130,11 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 
 \subsection{Current user}
+\textbf{Purpose:} \\ \texttt Return the identity and specific role profile ID of the currently authenticated user. \\
+
+
 \textbf{GET} \texttt{/api/auth/me}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -146,7 +156,10 @@ curl -X 'GET' \
 \section{BundleController (\texttt{/api/bundles})}
 
 \subsection{List available bundles}
+\textbf{Purpose:} \\ \texttt Returns a list of available food bundles. \\
+
 \textbf{GET} \texttt{/api/bundles/{}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -215,7 +228,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get a bundle by id}
+\textbf{Purpose:} \\ \texttt Retrieve a bundle posting by ID. \\
+
 \textbf{GET} \texttt{/api/bundles/\{id\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -255,7 +271,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Create a bundle}
+\textbf{Purpose:} \\ \texttt Creates a new bundle posting. \\
+
 \textbf{POST} \texttt{/api/bundles}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X POST http://localhost:8080/api/bundles \
@@ -281,7 +300,10 @@ curl -X POST http://localhost:8080/api/bundles \
 \end{lstlisting}
 
 \subsection{Update a bundle}
+\textbf{Purpose:} \\ \texttt Updates an existing bundle posting. \\
+
 \textbf{PUT} \texttt{/api/bundles/\{id\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'PUT' \
@@ -304,20 +326,27 @@ curl -X 'PUT' \
 \end{lstlisting}
 
 \subsection{Activate a bundle}
+\textbf{Purpose:} \\ \texttt Marks bundle as ACTIVE. \\
+
+
 \textbf{POST} \texttt{/api/bundles/\{id\}/activate}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X POST http://localhost:8080/api/bundles/3fa85f64-5717-4562-b3fc-2c963f66afa6/activate \
   -H "accept: */*"
 \end{lstlisting}
 
-\subsubsection*{Example Response (200 OK)}
+\subsubsection*{Example Response}
 \begin{lstlisting}
 {}
 \end{lstlisting}
 
 \subsection{Close a bundle}
+\textbf{Purpose:} \\ \texttt Marks bundle as CLOSED. \\
+
 \textbf{POST} \texttt{/api/bundles/\{id\}/close}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -332,7 +361,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{List bundles by seller}
+\textbf{Purpose:} \\ \texttt Return all bundles created by the seller. \\
+
 \textbf{GET} \texttt{/api/bundles/seller/\{sellerId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -376,7 +408,10 @@ curl -X 'GET' \
 \section{CategoryController (\texttt{/api/categories})}
 
 \subsection{List categories}
+\textbf{Purpose:} \\ \texttt Return all category options. \\
+
 \textbf{GET} \texttt{/api/categories}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -397,7 +432,10 @@ curl -X 'GET' \
 \section{OrderController (\texttt{/api/orders})}
 
 \subsection{Create order}
+\textbf{Purpose:} \\ \texttt Creates a new order for a bundle. \\
+
 \textbf{POST} \texttt{/api/orders}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -417,7 +455,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{Cancel order}
+\textbf{Purpose:} \\ \texttt Cancels an existing order. \\
+
 \textbf{POST} \texttt{/api/orders/\{id\}/cancel}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -432,7 +473,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{Collect order}
+\textbf{Purpose:} \\ \texttt Marks an order as collected. \\
+
 \textbf{POST} \texttt{/api/orders/\{id\}/collect}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -447,7 +491,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{Get orders by seller}
+\textbf{Purpose:} \\ \texttt Retrieves all orders created by a specific seller. \\
+
 \textbf{GET} \texttt{/api/orders/seller/\{sellerId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -471,7 +518,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get orders by organisation}
+\textbf{Purpose:} \\ \texttt Retrieves all orders created by a specific orgranisation. \\
+
 \textbf{GET} \texttt{/api/orders/org/\{orgId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -497,7 +547,10 @@ curl -X 'GET' \
 \section{IssueController (\texttt{/api/issues})}
 
 \subsection{Create issue}
+\textbf{Purpose:} \\ \texttt Creates a new issue for an order. \\
+
 \textbf{POST} \texttt{/api/issues}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -518,7 +571,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{Respond to issue}
+\textbf{Purpose:} \\ \texttt Creates responds for an issue. \\
+
 \textbf{POST} \texttt{/api/issues/\{id\}/respond}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -537,7 +593,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{Resolve issue}
+\textbf{Purpose:} \\ \texttt Marks an issue as resolved. \\
+
 \textbf{POST} \texttt{/api/issues/\{id\}/resolve}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'POST' \
@@ -552,7 +611,10 @@ curl -X 'POST' \
 \end{lstlisting}
 
 \subsection{Get issues by seller}
+\textbf{Purpose:} \\ \texttt Retrieves all issues from a specific seller. \\
+
 \textbf{GET} \texttt{/api/issues/seller/\{sellerId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -596,7 +658,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get open issues by seller}
+\textbf{Purpose:} \\ \texttt Retrieves all unresolved (open) issues from a specific seller. \\
+
 \textbf{GET} \texttt{/api/issues/seller/\{sellerId\}/open}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -640,7 +705,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get issues by organisation}
+\textbf{Purpose:} \\ \texttt Retrieves all issues created by a specific organisation. \\
+
 \textbf{GET} \texttt{/api/issues/org/\{orgId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -686,6 +754,8 @@ curl -X 'GET' \
 \section{GamificationController (\texttt{/api/gamification})}
 
 \subsection{List all badges}
+\textbf{Purpose:} \\ \texttt Retrieves a list of all available gamification badges. \\
+
 \textbf{GET} \texttt{/api/gamification/badges}
 
 \subsubsection*{Example Request}
@@ -708,7 +778,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get org badges}
+\textbf{Purpose:} \\ \texttt Retrieve all badges of a specific organization. \\
+
 \textbf{GET} \texttt{/api/gamification/badges/\{orgId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -745,7 +818,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get streak}
+\textbf{Purpose:} \\ \texttt Retrieves the current streak information of a specific organisation. \\
+
 \textbf{GET} \texttt{/api/gamification/streak/\{orgId\}} 
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -759,7 +835,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Get stats}
+\textbf{Purpose:} \\ \texttt Retrieves aggregated gamification statistics of a specific organisation. \\
+
 \textbf{GET} \texttt{/api/gamification/stats/\{orgId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -775,7 +854,10 @@ curl -X 'GET' \
 \section{AnalyticsController (\texttt{/api/analytics})}
 
 \subsection{Seller dashboard metrics}
+\textbf{Purpose:} \\ \texttt Returns aggregated seller dashboard metrics. \\
+
 \textbf{GET} \texttt{/api/analytics/dashboard/\{sellerId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -789,7 +871,10 @@ curl -X 'GET' \
 \end{lstlisting}
 
 \subsection{Sell-through breakdown}
+\textbf{Purpose:} \\ \texttt Returns sell-through breakdown percentages. \\
+
 \textbf{GET} \texttt{/api/analytics/sell-through/\{sellerId\}}
+
 \subsubsection*{Example Request}
 \begin{lstlisting}
 curl -X 'GET' \
@@ -809,3 +894,4 @@ curl -X 'GET' \
 \end{itemize}
 
 \end{document}
+
