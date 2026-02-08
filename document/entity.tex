@@ -26,14 +26,28 @@
 
 \section*{Overview}
 
+\begin{enumerate}
+    \item This document describes the core entities used in the system, including:
+    \begin{itemize}
+        \item \texttt{Badge.java}
+        \item \texttt{BundlePosting.java}
+        \item \texttt{Category.java}
+        \item \texttt{IssueReport.java}
+        \item \texttt{Organisation.java}
+        \item \texttt{OrganisationBadge.java}
+        \item \texttt{OrganisationStreakCache.java}
+        \item \texttt{PickupWindow.java}
+        \item \texttt{Reservation.java}
+        \item \texttt{Seller.java}
+        \item \texttt{UserAccount.java}
+    \end{itemize}
+\end{enumerate}
 
-
-This document describes 11 core entities: Badge, BundlePosting, Category, Employee, EmployeeBadge, IssueReport, Organisation, RescueEvent, Reservation, Seller, and UserAccount.
 
 
 
 % -------------------------------------------------
-\section{Badge}
+\section{Badge.java}
 
 \textbf{Table:} \texttt{badge} \\
 \textbf{Purpose:} Defines gamification badges
@@ -52,14 +66,14 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 
 \subsection*{Relationships}
 \begin{itemize}
-  \item Badge $\rightarrow$ EmployeeBadge (One-to-Many)
+  \item Badge $\rightarrow$ Organisation (One-to-Many)
 \end{itemize}
 
 % -------------------------------------------------
-\section{BundlePosting}
+\section{BundlePosting.java}
 
-\textbf{Table:} \texttt{bundle\_posting} \\
-\textbf{Purpose:} Represents a food bundle listed for rescue
+\textbf{Table:} \texttt{bundlePosting} \\
+\textbf{Purpose:} Represents a food bundle information 
 
 \subsection*{Attributes}
 \begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
@@ -67,8 +81,10 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 \textbf{Field} & \textbf{Type} & \textbf{Notes} \\
 \hline
 \texttt{posting\_id} & \texttt{UUID} & Primary key \\
-\texttt{seller\_id} & \texttt{Seller} & @\texttt{ManyToOne}, FK \texttt{seller} \\
-\texttt{category\_id} & \texttt{Category} & @\texttt{ManyToOne}, FK \texttt{category} \\
+\texttt{seller\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{Seller} \\
+\texttt{category\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{Category} \\
+\texttt{window\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{PickupWindow} \\
+
 \texttt{title} & \texttt{String} &  \\
 \texttt{description} & \texttt{String} &  \\
 \texttt{allergensText} & \texttt{String} &  \\
@@ -78,8 +94,8 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 \texttt{quantityReserved} & \texttt{Integer} &  \\
 \texttt{priceCents} & \texttt{Integer} &  \\
 \texttt{discountPct} & \texttt{Integer} &  \\
-\texttt{contexts\_test} & \texttt{String} &  \\
-\texttt{status} & \texttt{Status} &  \\
+\texttt{estimatedWeightGrams} & \texttt{Integer} &  \\
+\texttt{status} & \texttt{ENUM} &  \\
 \texttt{created\_at} & \texttt{Instant} &  \\
 \hline
 \end{longtable}
@@ -88,12 +104,14 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 \begin{itemize}
   \item BundlePosting $\rightarrow$ Seller (Many-to-One)
   \item BundlePosting $\rightarrow$ Category (Many-to-One)
+  \item BundlePosting $\rightarrow$ PickupWindow (Many-to-One)
   \item BundlePosting $\rightarrow$ Reservation (One-to-Many)
-  \item BundlePosting $\rightarrow$ IssueReport (One-to-Many)
+
+  
 \end{itemize}
 
 % -------------------------------------------------
-\section{Category}
+\section{Category.java}
 
 \textbf{Table:} \texttt{category} \\
 \textbf{Purpose:} Bundle category
@@ -113,66 +131,13 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
   \item Category $\rightarrow$ BundlePosting (One-to-Many)
 \end{itemize}
 
-% -------------------------------------------------
-\section{Employee}
 
-\textbf{Table:} \texttt{employee} \\
-\textbf{Purpose:} Represents a consumer/employee user that rescues bundles
-
-\subsection*{Attributes}
-\begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
-\hline
-\textbf{Field} & \textbf{Type} & \textbf{Notes} \\
-\hline
-\texttt{employee\_id} & \texttt{UUID} & Primary key \\
-\texttt{org\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{organisation} \\
-\texttt{user\_id} & \texttt{UUID} & @\texttt{OneToOne}, FK \texttt{user} \\
-\texttt{display\_name} & \texttt{String} &  \\
-\texttt{created\_at} & \texttt{Instant} &  \\
-\hline
-\end{longtable}
-
-\subsection*{Relationships}
-\begin{itemize}
-  \item Employee $\rightarrow$ Organisation (Many-to-One)
-  \item Employee $\rightarrow$ UserAccount (Zero-or-One-to-One)
-  \item Employee $\rightarrow$ EmployeeBadge (One-to-Many)
-  \item Employee $\rightarrow$ Reservation (One-to-Many)
-  \item Employee $\rightarrow$ RescueEvent (One-to-Many)
-\end{itemize}
 
 % -------------------------------------------------
-\section{EmployeeBadge}
+\section{IssueReport.java}
 
-\textbf{Table:} \texttt{employee\_badge} \\
-\textbf{Purpose:} Many-to-many join between Employee and Badge \\
-
-\subsection*{Attributes}
-\begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
-\hline
-\textbf{Field} & \textbf{Type} & \textbf{Notes} \\
-\hline
-\texttt{employee\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{employee} \\
-\texttt{badge\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{badge} \\
-\texttt{awarded\_at} & \texttt{Instant} &  \\
-\hline
-\end{longtable}
-
-
-
-\subsection*{Relationships}
-\begin{itemize}
-  \item EmployeeBadge $\rightarrow$ Employee (Many-to-One)
-  \item EmployeeBadge $\rightarrow$ Badge (Many-to-One)
-\end{itemize}
-
-% -------------------------------------------------
-\section{IssueReport}
-
-\textbf{Table:} \texttt{issue\_report} \\
-\textbf{Purpose:} Reports issues about a bundle / reservation
-
-
+\textbf{Table:} \texttt{issueReport} \\
+\textbf{Purpose:} Stores issue reports and responses \\
 
 \subsection*{Attributes}
 \begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
@@ -180,15 +145,12 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 \textbf{Field} & \textbf{Type} & \textbf{Notes} \\
 \hline
 \texttt{issue\_id} & \texttt{UUID} & Primary key \\
-\texttt{posting\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{posting} \\
 \texttt{reservation\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{reservation} \\
-\texttt{employee\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{employee} \\
-\texttt{created\_by\_user\_id} & \texttt{UUID} &  \\
-\texttt{type} & \texttt{String} &  \\
+\texttt{org\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{organisation} \\
+\texttt{type} & \texttt{String} & \\
 \texttt{description} & \texttt{String} &  \\
-\texttt{status} & \texttt{Status} &  \\
-\texttt{sellerResponse} & \texttt{String} &  \\
-\texttt{responded\_by\_user\_id} & \texttt{UUID} &  \\
+\texttt{status} & \texttt{ENUM} & \\
+\texttt{seller\_response} &  \texttt{String} & \\
 \texttt{created\_at} & \texttt{Instant} &  \\
 \texttt{resolved\_at} & \texttt{Instant} &  \\
 \hline
@@ -196,17 +158,16 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 
 \subsection*{Relationships}
 \begin{itemize}
-  \item IssueReport $\rightarrow$ Employee (Many-to-One)
   \item IssueReport $\rightarrow$ Reservation (Many-to-One)
-  \item IssueReport $\rightarrow$ BundlePosting (Many-to-One)
-
+  \item IssueReport $\rightarrow$ Organisation (Many-to-One)
 \end{itemize}
 
+
 % -------------------------------------------------
-\section{Organisation}
+\section{Organisation.java}
 
 \textbf{Table:} \texttt{organisation} \\
-\textbf{Purpose:} Represents an organisation or business participating in the system
+\textbf{Purpose:} Represents an organisation participating in the system
 
 
 
@@ -217,10 +178,11 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 \textbf{Field} & \textbf{Type} & \textbf{Notes} \\
 \hline
 \texttt{org\_id} & \texttt{UUID} & Primary key \\
-\texttt{name} & \texttt{String} &  \\
+\texttt{user\_id} & \texttt{UUID} & @\texttt{OneToOne}, FK \texttt{UserAccount}\\
+\texttt{name} & \texttt{String} & \\
 \texttt{location\_text} & \texttt{String} &  \\
-\texttt{billing\_stub} & \texttt{String} &  \\
-\texttt{created\_at} & \texttt{Instant} &  \\
+\texttt{billing\_email} & \texttt{String} &  \\
+\texttt{created\_at} & \texttt{Instant} & \\
 \hline
 
 
@@ -229,47 +191,93 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 
 \subsection*{Relationships}
 \begin{itemize}
-  \item Organisation $\rightarrow$ Employee (One-to-Many)
-  \item Organisation $\rightarrow$ Seller (One-to-Many)
+  \item Organisation $\rightarrow$ UserAccount (One-to-One)
+  \item Organisation $\rightarrow$ IssurReport (One-to-Many)
+
 
 \end{itemize}
 
-% -------------------------------------------------
-% -------------------------------------------------
 
-\section{RescueEvent}
+% -------------------------------------------------
+\section{OrganisationBadge.java}
 
-\textbf{Table:} \texttt{rescue\_event} \\
-\textbf{Purpose:} Records completed rescue events for streak and impact calculations
+\textbf{Table:} \texttt{organisationBadge} \\
+\textbf{Purpose:} Many-to-many join between Organisation and Badge \\
 
 \subsection*{Attributes}
 \begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
 \hline
 \textbf{Field} & \textbf{Type} & \textbf{Notes} \\
 \hline
-\texttt{event\_id} & \texttt{UUID} & Primary key \\
-\texttt{employee\_id} & \texttt{Employee} & @\texttt{ManyToOne}, FK \texttt{employee} \\
-\texttt{reservation\_id} & \texttt{Reservation} & @\texttt{OneToOne}, FK \texttt{reservation} \\
-\texttt{created\_at} & \texttt{Instant} &  \\
-\texttt{mealsEstimate} & \texttt{Integer} &  \\
-\texttt{co2eEstimateGrams} & \texttt{Integer} & \\
+\texttt{org\_id} & \texttt{UUID} & Primary key, @\texttt{ManyToOne}, FK \texttt{organisation} \\
+\texttt{badge\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{badge} \\
+\texttt{organisation} & \texttt{Organisation} & \\
+\texttt{badge} & \texttt{Badge} &  \\
+\texttt{awarded\_at} & \texttt{Instant} &  \\
 \hline
 \end{longtable}
 
 \subsection*{Relationships}
 \begin{itemize}
-  \item RescueEvent $\rightarrow$ Employee (Many-to-One)
-  \item RescueEvent $\rightarrow$ Reservation (One-to-One)
+  \item OrganisationBadge $\rightarrow$ Organisation (Many-to-One)
+  \item OrganisationBadge $\rightarrow$ Badge (Many-to-One)
+\end{itemize}
+
+% -------------------------------------------------
+\section{OrganisationStreakCache.java}
+
+\textbf{Table:} \texttt{organisationStreakCache} \\
+\textbf{Purpose:} Caches organisation rescue streak statistics \\
+
+\subsection*{Attributes}
+\begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Field} & \textbf{Type} & \textbf{Notes} \\
+\hline
+\texttt{org\_id} & \texttt{UUID} & Primary key, @\texttt{OneToOne}, FK \texttt{organisation} \\
+\texttt{current\_streak\_weeks} & \texttt{Integer} & \\
+\texttt{best\_streak\_weeks} & \texttt{Integer} & \\
+\texttt{last\_rescue\_week\_start} & \texttt{LocalDate} & \\
+\texttt{updated\_at} & \texttt{Instant} &  \\
+\hline
+\end{longtable}
+
+\subsection*{Relationships}
+\begin{itemize}
+  \item OrganisationStreakCache $\rightarrow$ Organisation (One-to-One)
+\end{itemize}
+
+% -------------------------------------------------
+\section{PickupWindow.java}
+
+\textbf{Table:} \texttt{pickupWindow} \\
+\textbf{Purpose:} Defines predefined pickup time windows for bundle collection \\
+
+\subsection*{Attributes}
+\begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Field} & \textbf{Type} & \textbf{Notes} \\
+\hline
+\texttt{window\_id} & \texttt{UUID} & Primary key \\
+\texttt{label} & \texttt{String} &  \\
+\texttt{start\_time} & \texttt{LocalTime} &  \\
+\texttt{end\_time} & \texttt{LocalTime} &  \\
+\hline
+\end{longtable}
+
+\subsection*{Relationships}
+\begin{itemize}
+  \item PickupWindow $\rightarrow$ BundlePosting (One-to-Many)
+
 \end{itemize}
 
 
 % -------------------------------------------------
-\section{Reservation}
+
+\section{Reservation.java}
 
 \textbf{Table:} \texttt{reservation} \\
-\textbf{Purpose:} Represents a user's reservation of a bundle, including claim code and lifecycle state
-
-
+\textbf{Purpose:} Represents a reservation made by an organisation  \\
 
 \subsection*{Attributes}
 \begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
@@ -277,35 +285,35 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 \textbf{Field} & \textbf{Type} & \textbf{Notes} \\
 \hline
 \texttt{reservation\_id} & \texttt{UUID} & Primary key \\
-\texttt{posting\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{bundlePosting} \\
-\texttt{org\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{organisation}\\
-\texttt{employee\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{employee} \\
-\texttt{reserved\_by\_user\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{userAccount} \\
-\texttt{reserved\_at} & \texttt{Instant} &  \\
-\texttt{status} & \texttt{Status} & \\
-\texttt{claim\_code\_hash} & \texttt{String} & \\
+\texttt{posting\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{bundle\_posting} \\
+\texttt{org\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{organisation} \\
+\texttt{reserved\_by\_user\_id} & \texttt{UUID} & @\texttt{ManyToOne}, FK \texttt{user\_account} \\
+\texttt{reserved\_at} & \texttt{Instant} & \\
+\texttt{status} & \texttt{ENUM} &  \\
+\texttt{claim\_code\_hash} & \texttt{String} &  \\
 \texttt{claim\_code\_last4} & \texttt{String} & \\
-\texttt{collected\_at} & \texttt{Instant} & \\
-\texttt{no\_show\_marked\_at} & \texttt{Instant} &  \\
-\texttt{expired\_marked\_at} & \texttt{Instant} &  \\
+\texttt{collected\_at} & \texttt{Instant} &  \\
+\texttt{no\_show\_marked\_at} & \texttt{Instant} & \\
+\texttt{expired\_marked\_at} & \texttt{Instant} & \\
+\texttt{cancelled\_at} & \texttt{Instant} &  \\
 \hline
 \end{longtable}
 
 \subsection*{Relationships}
 \begin{itemize}
   \item Reservation $\rightarrow$ BundlePosting (Many-to-One)
-  \item Reservation $\rightarrow$ Employee (Many-to-One)
   \item Reservation $\rightarrow$ Organisation (Many-to-One)
-  \item Reservation $\rightarrow$ RescueEvent (One-to-One)
-  \item Reservation $\rightarrow$ IssueReport (One-to-Many)
   \item Reservation $\rightarrow$ UserAccount (Many-to-One)
+  \item Reservation $\rightarrow$ IssueReport (One-to-Many)
+
 \end{itemize}
 
+
 % -------------------------------------------------
-\section{Seller}
+\section{Seller.java}
 
 \textbf{Table:} \texttt{seller} \\
-\textbf{Purpose:} Represents a seller that lists surplus food bundles
+\textbf{Purpose:} Represents a seller account that lists food bundles
 
 \subsection*{Attributes}
 \begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}
@@ -330,10 +338,10 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 
 
 % -------------------------------------------------
-\section{UserAccount}
+\section{UserAccount.java}
 
 \textbf{Table:} \texttt{userAccount} \\
-\textbf{Purpose:} The system's login account information
+\textbf{Purpose:} Stores user account information
 
 
 
@@ -355,7 +363,7 @@ This document describes 11 core entities: Badge, BundlePosting, Category, Employ
 
 \subsection*{Relationships}
 \begin{itemize}
-  \item UserAccount $\rightarrow$ Employee (One-to-One)
+  \item UserAccount $\rightarrow$ Reservation (One-to-Many)
   \item UserAccount $\rightarrow$ Seller (One-to-One)
   \item UserAccount $\rightarrow$ Organisation (One-to-One)
 

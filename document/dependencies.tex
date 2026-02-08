@@ -1,0 +1,196 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\title{Dependencies Documentation}
+\date{}
+
+
+\begin{document}
+\maketitle
+\hrule
+\vspace{1em}
+
+% -------------------------------------------------
+\section{Overview}
+
+This document describes the Development Environment Requirements, Backend Dependencies, Database Dependencies, Frontend Dependencies, and Environment Variables required for local development and project execution.  
+
+
+% -------------------------------------------------
+\section{Development Environment Requirements}
+
+\subsection{Java Development Kit (JDK)}
+\begin{itemize}
+    \item \textbf{Java Version:} JDK 17
+\end{itemize}
+
+\subsection{Node.js}
+\begin{itemize}
+    \item \textbf{Node.js Version:} 20
+\end{itemize}
+
+% -------------------------------------------------
+\section{Backend Dependencies}
+
+\subsection{Build Tool}
+\begin{itemize}
+    \item \textbf{Build System:} Maven
+\end{itemize}
+
+\subsection{Spring Boot}
+\begin{itemize}
+    \item \textbf{Spring Boot Version:} 3.2.1
+    \item Defined by the \texttt{spring-boot-starter-parent}
+\end{itemize}
+
+\subsection{Maven Dependencies}
+
+\subsubsection*{Core Web and API}
+\begin{itemize}
+    \item \texttt{spring-boot-starter-web} – REST APIs and embedded server
+\end{itemize}
+
+\subsubsection*{Persistence and ORM}
+\begin{itemize}
+    \item \texttt{spring-boot-starter-data-jpa} – (Jakarta Persistence API)
+\end{itemize}
+
+\subsubsection*{Security}
+\begin{itemize}
+    \item \texttt{spring-boot-starter-security} – Authentication and Authorization
+\end{itemize}
+
+\subsubsection*{Validation}
+\begin{itemize}
+    \item \texttt{spring-boot-starter-validation} – Bean validation
+\end{itemize}
+
+\subsubsection*{Database Driver}
+\begin{itemize}
+    \item \texttt{org.postgresql:postgresql} – PostgreSQL JDBC driver
+\end{itemize}
+
+\subsubsection*{Database Migration}
+\begin{itemize}
+    \item \texttt{flyway-core}
+    \item \texttt{flyway-database-postgresql}
+\end{itemize}
+
+\subsubsection*{JWT Authentication}
+\begin{itemize}
+    \item \texttt{jjwt-api}
+    \item \texttt{jjwt-impl}
+    \item \texttt{jjwt-jackson}
+\end{itemize}
+
+\subsubsection*{Developer Utilities}
+\begin{itemize}
+    \item \texttt{lombok}
+\end{itemize}
+
+\subsubsection*{Testing}
+\begin{itemize}
+    \item \texttt{spring-boot-starter-test}
+    \item \texttt{spring-security-test}
+\end{itemize}
+
+% -------------------------------------------------
+\section{Database Dependencies}
+
+\begin{itemize}
+    \item \textbf{Database Type:} PostgreSQL
+\end{itemize}
+
+\subsection{Database Migration}
+\begin{itemize}
+    \item \textbf{Tool:} Flyway
+\end{itemize}
+
+
+% -------------------------------------------------
+\section{Frontend Dependencies}
+
+\subsection{Build Tool}
+\begin{itemize}
+    \item \textbf{Build System:} Node.js
+\end{itemize}
+
+\subsection{Frameworks and Libraries}
+\begin{itemize}
+    \item \textbf{Next.js:} 16.1.3
+    \item \textbf{React:} 19.2.3
+\end{itemize}
+
+\subsection{Runtime Dependencies}
+\begin{itemize}
+    \item \texttt{better-auth}
+    \item \texttt{pg} – PostgreSQL client
+    \item \texttt{geist} – UI utilities
+\end{itemize}
+
+\subsection{Development Dependencies}
+\begin{itemize}
+    \item TypeScript
+    \item TailwindCSS with PostCSS
+\end{itemize}
+
+% -------------------------------------------------
+\section{External Services}
+
+\begin{itemize}
+    \item \textbf{Database (Supabase)} – PostgreSQL database provider
+\end{itemize}
+
+% -------------------------------------------------
+\section{Environment Variables}
+
+\subsection{Backend Environment Variables}
+
+\begin{longtable}{|p{4cm}|p{7cm}|}
+\hline
+\textbf{Variable} & \textbf{Description} \\
+\hline
+SERVER\_PORT & Port on which the backend server runs on \\
+DB\_URL & PostgreSQL JDBC connection URL \\
+DB\_USERNAME & Database username \\
+DB\_PASSWORD & Database password \\
+JWT\_SECRET & Secret key used to sign JWT tokens \\
+JWT\_EXPIRATION & JWT expiration time (ms) \\
+\hline
+\end{longtable}
+
+\subsection{Frontend Environment Variables}
+
+\begin{longtable}{|p{5cm}|p{6cm}|}
+\hline
+\textbf{Variable} & \textbf{Description} \\
+\hline
+NEXT\_PUBLIC\_API\_URL & Backend API base URL \\
+BETTER\_AUTH\_SECRET & Secret for frontend authentication \\
+BETTER\_AUTH\_URL & Authentication base URL \\
+\hline
+\end{longtable}
+
+% -------------------------------------------------
+\section{Summary}
+
+\begin{itemize}
+    \item Backend built and run using Maven and Spring Boot
+    \item Frontend built and run using npm and Next.js
+\end{itemize}
+
+\end{document}
+
+

@@ -1,3 +1,6 @@
+
+
+
 \documentclass[12pt]{article}
 
 \usepackage[a4paper,margin=1in]{geometry}
@@ -11,7 +14,6 @@
 \title{Backend Repository Documentation}
 \author{}
 \date{}
-
 
 
 \begin{document}
@@ -28,15 +30,18 @@ This document describes all backend repositories, focusing on:
 \hrule
 \vspace{1em}
 
-\section{BadgeRepository}
+\section{BadgeRepository.java}
 
 \textbf{Entity:} Badge \\
 \textbf{Extends:} \texttt{JpaRepository<Badge, UUID>}
 
 \subsection*{Entity Relationships}
+This repository manages the \texttt{Badge} entity, which is associated with:
 \begin{itemize}
-    \item This repository manages the \texttt{Badge} entity.
-    \item \texttt{Badge} is associated with \texttt{EmployeeBadge}, representing which users or employees have been awarded a badge.
+    \item \texttt{UserAccount}
+    \item \texttt{Organisation}
+    \item \texttt{OrganisationBadge}
+
 \end{itemize}
 
 \subsection*{Custom Query Methods}
@@ -48,7 +53,7 @@ This document describes all backend repositories, focusing on:
 \hrule
 \vspace{1em}
 
-\section{BundlePostingRepository}
+\section{BundlePostingRepository.java}
 
 \textbf{Entity:} BundlePosting \\
 \textbf{Extends:} \texttt{JpaRepository<BundlePosting, UUID>}
@@ -58,6 +63,7 @@ This repository manages the \texttt{BundlePosting} entity, which is associated w
 \begin{itemize}
     \item \texttt{Seller} (each bundle posting is created by a seller)
     \item \texttt{Category} (each bundle posting belongs to a category)
+    \item \texttt{Reservation}
 \end{itemize}
 
 \subsection*{Custom Query Methods}
@@ -78,81 +84,26 @@ This repository manages the \texttt{BundlePosting} entity, which is associated w
 \hrule
 \vspace{1em}
 
-\section{CategoryRepository}
+\section{CategoryRepository.java}
 
 \textbf{Entity:} Category \\
 \textbf{Extends:} \texttt{JpaRepository<Category, UUID>}
 
 \subsection*{Entity Relationships}
+This repository manages the \texttt{Category} entity, which is associated with:
 \begin{itemize}
-    \item This repository manages the \texttt{Category} entity, which is associated with \texttt{BundlePosting}. \\
-    (each bundle posting is classified under a category)
-    
+    \item \texttt{BundlePosting}
 \end{itemize}
 
 \subsection*{Custom Query Methods}
-This repository does not define any custom query methods.
+This repository does not have custom query methods.
 
 \hrule
 \vspace{1em}
 
-\section{EmployeeRepository}
-
-\textbf{Entity:} Employee \\
-\textbf{Extends:} \texttt{JpaRepository<Employee, UUID>}
-
-\subsection*{Entity Relationships}
-This repository manages the \texttt{Employee} entity, which is associated with:
-\begin{itemize}
-    \item \texttt{Organisation} (many employees belong to one organisation)
-    \item \texttt{UserAccount} (an employee may be linked to a user account for login/access
-
-    \item \texttt{EmployeeBadge} (tracks badges awarded to an employee)
-    \item \texttt{Reservation} (reservations handled/managed by an employee)
-    \item \texttt{RescueEvent} (events created or managed by an employee)
-\end{itemize}
-
-\subsection*{Custom Query Methods}
-\begin{itemize}
-    \item \texttt{Optional<Employee> findByUser\_UserId(UUID userId)} \\
-    Retrieves the employee record linked to a \texttt{UserAccount}.
-
-    \item \texttt{List<Employee> findByOrganisation\_OrgId(UUID orgId)} \\
-    Retrieves all employees belonging to an organisation.
-\end{itemize}
-
-\hrule
-\vspace{1em}
-
-\section{EmployeeBadgeRepository}
-
-\textbf{Entity:} EmployeeBadge \\
-\textbf{Extends:} \texttt{JpaRepository<EmployeeBadge, EmployeeBadge.Key>}
-
-\subsection*{Entity Relationships}
-This repository manages the \texttt{EmployeeBadge} entity, representing a link between:
-\begin{itemize}
-    \item \texttt{Employee}
-    \item \texttt{Badge} \\
-
-    It is used to track which badges have been awarded to which employees.
 
 
-\end{itemize}
-
-\subsection*{Custom Query Methods}
-\begin{itemize}
-    \item \texttt{List<EmployeeBadge> findByEmployeeId(UUID employeeId)} \\
-    Retrieves all badge assignments for a specific employee.
-
-    \item \texttt{boolean existsByEmployeeIdAndBadgeId(UUID employeeId, UUID badgeId)} \\
-    Checks whether a badge has already been awarded to an employee.
-\end{itemize}
-
-\hrule
-\vspace{1em}
-
-\section{IssueReportRepository}
+\section{IssueReportRepository.java}
 
 \textbf{Entity:} IssueReport \\
 \textbf{Extends:} \texttt{JpaRepository<IssueReport, UUID>}
@@ -161,16 +112,14 @@ This repository manages the \texttt{EmployeeBadge} entity, representing a link b
 Associated with:
 \begin{itemize}
     \item \texttt{BundlePosting} (the bundle posting that the issue refers to)
-    \item \texttt{Seller} (indirectly via the associated bundle posting)
     \item \texttt{UserAccount} (the user who submitted the issue report)
-    \item \texttt{Reservation} (the reservation related to the issue)
-    \item \texttt{Employee} (the employee assigned to handle the issue)
+    \item \texttt{OrgOrder} (the reservation related to the issue)
 \end{itemize}
 
 \subsection*{Custom Query Methods}
 \begin{itemize}
-    \item \texttt{List<IssueReport> findOpenBySeller(UUID sellerId)} \\
-    Retrieves all issue reports that are linked to bundle postings owned by a seller.
+    \item \texttt{List<IssueReport> findByOrganisationOrgId(UUID orgId)} \\
+    Retrieves all issue reports associated with a specific organisation.
 
 
 
@@ -178,6 +127,8 @@ Associated with:
     \item \texttt{List<IssueReport> findBySeller(UUID sellerId)} \\
     Retrieves all issue reports associated with bundle postings owned by a seller.
 
+    \item \texttt{List<IssueReport> findOpenBySeller(UUID sellerId)} \\
+     Retrieves all opened issue reports for a specific seller
 
 
     
@@ -186,117 +137,121 @@ Associated with:
 \hrule
 \vspace{1em}
 
-\section{OrganisationRepository}
+\section{OrganisationRepository.java}
 
 \textbf{Entity:} Organisation \\
 \textbf{Extends:} \texttt{JpaRepository<Organisation, UUID>}
 
 \subsection*{Entity Relationships}
 
-This repository manages Organisation entity. Organisation is associated with:
+This repository manages Organisataion, which is associated with:
 
 \begin{itemize}
-    \item \texttt{Employee} (employees belong to an organisation)
+    \item \texttt{UserAccount}
 \end{itemize}
 
 
 \subsection*{Custom Query Methods}
-This repository does not define any custom query methods.
+\begin{itemize}
+    \item \texttt{Optional<Organisation> findByUserUserId(UUID userId)} \\ 
+  Retrieves the organisation associated with the specific UserAccount.
+
+\end{itemize}
 
 \hrule
 \vspace{1em}
 
-\section{RescueEventRepository}
+\section{OrganisationBadgeRepository.java}
 
-\textbf{Entity:} RescueEvent \\
-\textbf{Extends:} \texttt{JpaRepository<RescueEvent, UUID>}
+\textbf{Entity:} OrganisationBadge \\
+\textbf{Extends:} \texttt{JpaRepositoryy<OrganisationBadge, OrganisationBadge.Key>}
+
+\subsection*{Entity Relationships}
+This repository manages the \texttt{OrganisationBadge} entity, representing a link between:
+\begin{itemize}
+    \item \texttt{Organisation}
+    \item \texttt{Badge}
+\end{itemize}
+
+\subsection*{Custom Query Methods}
+\begin{itemize}
+    \item \texttt{List<OrganisationBadge> findByOrgId(UUID orgId)} \\
+  Retrieves all badge associations for a specific organisation.
+\end{itemize}
+
+
+
+\section{OrganisationStreakCacheRepository.java}
+
+\textbf{Entity:} OrganisationStreakCache \\
+\textbf{Extends:} \texttt{JpaRepository<OrganisationStreakCache, UUID>}
+
+\subsection*{Entity Relationships}
+This repository manages the \texttt{OrgOrder} entity, which is associated with:
+\begin{itemize}
+    \item \texttt{Organisation}
+\end{itemize}
+
+\subsection*{Custom Query Methods}
+This repository does not have custom query methods.
+
+\hrule
+\vspace{1em}
+
+\section{PickupWindowRepository.java}
+
+\textbf{Entity:} PickupWindow \\
+\textbf{Extends:} \texttt{JpaRepository<PickupWindow, UUID>}
 
 \subsection*{Entity Relationships}
 
-This repository manages the \texttt{RescueEvent} entity, which is associated with:
+This repository manages the \texttt{Seller} entity, which is associated with:
 
 \begin{itemize}
-    \item \texttt{Employee} (many rescue events can be performed by a single employee)
-    \item \texttt{Reservation} (each rescue event corresponds to a reservation)
+    \item \texttt{BundlePosting}
 \end{itemize}
 
 
 \subsection*{Custom Query Methods}
 \begin{itemize}
-    \item \texttt{List<RescueEvent> findByEmployee\_EmployeeId(UUID employeeId)} \\
-    Retrieves all rescue events performed by an employee.
-
-    \item \texttt{long countByEmployee\_EmployeeId(UUID employeeId)} \\
-    Returns the total number of rescue events performed by an employee.
-
-    \item \texttt{long sumCo2eByEmployee(UUID employeeId)} \\
-    Returns the total estimated CO$_2$e savings generated by rescue events performed by an employee.
-    
-    \item \texttt{long sumMealsByEmployee(UUID employeeId)} \\
-    Returns the total estimated number of meals saved by rescue events performed by an employee.
+    \item \texttt{Optional<PickupWindow> findByLabel(String label)} \\
+Retrieves a pickup window using its label. 
 \end{itemize}
-
-
-
-
 
 \hrule
 \vspace{1em}
 
-\section{ReservationRepository}
+
+\section{ReservationRepository.java}
 
 \textbf{Entity:} Reservation \\
 \textbf{Extends:} \texttt{JpaRepository<Reservation, UUID>}
 
 \subsection*{Entity Relationships}
 
-This repository manages the \texttt{Reservation} entity, which is associated with:
+This repository manages the \texttt{Seller} entity, which is associated with:
 
 \begin{itemize}
-    \item \texttt{Organisation} (the organisation that made the reservation)
-    \item \texttt{UserAccount} (the user who created the reservation)
-    \item \texttt{Employee} (the employee assigned to handle the reservation)
-    \item \texttt{RescueEvent} (each reservation may result in a rescue event)
-    \item \texttt{IssueReport} (a reservation can have multiple issue reports)
+    \item \texttt{BundlePosting}
+    \item \texttt{Organisation}
+    \item \texttt{Seller}
 \end{itemize}
 
 
 \subsection*{Custom Query Methods}
 \begin{itemize}
-    \item \texttt{List<Reservation> findByPosting\_PostingId(UUID postingId)} \\
-    Retrieves all reservations for a bundle posting.
-
-
-    \item \texttt{List<Reservation> findByOrganisation\_OrgId(UUID orgId)} \\
-    Retrieves all reservations made by an organisation.
-
-
-    \item \texttt{List<Reservation> findByEmployee\_EmployeeId(UUID employeeId)} \\
-    Retrieves all reservations assigned to an employee.
-
-
-    \item \texttt{Optional<Reservation> findByClaimCodeHash(String hash)} \\
-    Retrieves a reservation using its hashed claim code
-
-
-    \item \texttt{List<Reservation> findExpired(Instant now)} \\
-    Retrieve bookings whose pickup deadline has passed.
-
-
-    \item \texttt{long countByPosting\_PostingIdAndStatus(UUID postingId, \\ Reservation.Status status)} \\
-    Returns the number of reservations for a given posting filtered by reservation status.
-
-
-    \item \texttt{List<Reservation> findBySellerAndStatus(UUID sellerId, \\ Reservation.Status status)} \\
-    Retrieves all reservations linked to bundle postings owned by a seller and filtered by status.
-
-
+    \item \texttt{List<Reservation> findByOrganisationOrgId(UUID orgId)} \\
+Retrieves all reservations made by a specific organisation.
+    \item \texttt{List<Reservation> findByPostingSellerSellerId(UUID sellerId))} \\
+ Retrieves all reservations related to bundle postings owned by a specific seller.    \item \texttt{List<Reservation> findByPostingSellerSellerIdAndStatus(UUID sellerId, Reservation.Status status)} \\
+Retrieves reservations for a specific seller based on reservation status.  
 \end{itemize}
 
 \hrule
 \vspace{1em}
 
-\section{SellerRepository}
+
+\section{SellerRepository.java}
 
 \textbf{Entity:} Seller \\
 \textbf{Extends:} \texttt{JpaRepository<Seller, UUID>}
@@ -306,22 +261,22 @@ This repository manages the \texttt{Reservation} entity, which is associated wit
 This repository manages the \texttt{Seller} entity, which is associated with:
 
 \begin{itemize}
-    \item \texttt{UserAccount} (each seller account is linked to a single user account)
-    \item \texttt{BundlePosting} (a seller can create multiple bundle postings)
+    \item \texttt{UserAccount}
+    \item \texttt{Reservation}
 \end{itemize}
 
 
 \subsection*{Custom Query Methods}
 \begin{itemize}
     \item \texttt{Optional<Seller> findByUser\_UserId(UUID userId)} \\
-    Retrieves the seller entity associated with a user account.
+    Retrieves the seller entity associated with an user account.
 
 \end{itemize}
 
 \hrule
 \vspace{1em}
 
-\section{UserAccountRepository}
+\section{UserAccountRepository.java}
 
 \textbf{Entity:} UserAccount \\
 \textbf{Extends:} \texttt{JpaRepository<UserAccount, UUID>}
@@ -331,10 +286,8 @@ This repository manages the \texttt{Seller} entity, which is associated with:
 This repository manages the \texttt{UserAccount} entity, which is associated with:
 
 \begin{itemize}
-    \item \texttt{Seller} (a user account may be linked to a seller profile)
-    \item \texttt {Employee} (a user account may be linked to an employee profile)
-    \item \texttt{Reservation} (a user account can create multiple reservations)
-    \item \texttt{IssueReport} (a user account can submit multiple issue reports)
+    \item \texttt{Seller}
+    \item \texttt{IssueReport}
 \end{itemize}
 
 
