@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSeller, setIsSeller] = useState(false);
+  const [TCs,setTCs] = useState(false);
   const [location, setLocation] = useState("");
 
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,11 @@ export default function RegisterPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if(!TCs){
+      setError("You must accept our terms and conditions.");
+      return;
+    }
 
     if (!name || !email || !password) {
       setError("All fields are required.");
@@ -138,6 +144,22 @@ export default function RegisterPage() {
                 className="checkbox"
               />
               <span>I am a seller</span>
+            </label>
+
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={TCs}
+                onChange={(e) => setTCs(e.target.checked)}
+                className="checkbox"
+              />
+
+              <span>
+                By checking this box you agree to our{" "}
+                <Link href="/terms" className="link underline">
+                  terms and conditions
+                </Link>.
+              </span>
             </label>
           </div>
 
