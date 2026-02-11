@@ -1,6 +1,16 @@
 /*
 Byte Me — Sprint 1 schema (Postgres)
 
+This version assumes you’re using an external auth provider (most likely Supabase Auth).
+So:
+- The auth system owns login + password handling + sessions/JWT.
+- Your DB stores “profile” + role for each authenticated user.
+- `user_id` is the auth provider UUID (e.g. Supabase `auth.users.id`).
+- No `password_hash` in your tables.
+
+Everything else (sellers, orgs, postings, reservations, forecasting, triggers) stays basically the same,
+just pointing at `app_user` instead of `user_account`.
+
 What this sets up:
 - Accounts: a single login can be a seller, consumer/org admin, or maintainer.
 - Sellers can post surplus bundles with a pickup window + category.
@@ -32,17 +42,17 @@ DO $$ BEGIN
   CREATE TYPE reservation_status AS ENUM ('RESERVED', 'COLLECTED', 'NO_SHOW', 'EXPIRED', 'CANCELLED');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TABLE IF NOT EXISTS user_account (
-  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
+-- App profile table.
+-- Supabase Auth owns email/password + sessions; this table stores role + any app-specific fields.
+CREATE TABLE IF NOT EXISTS app_user (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role user_role NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS seller (
   seller_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL UNIQUE REFERENCES user_account(user_id) ON DELETE CASCADE,
+  user_id UUID NOT NULL UNIQUE REFERENCES app_user(user_id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   location_text VARCHAR(500),
   opening_hours_text VARCHAR(500),
@@ -52,7 +62,7 @@ CREATE TABLE IF NOT EXISTS seller (
 
 CREATE TABLE IF NOT EXISTS organisation (
   org_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL UNIQUE REFERENCES user_account(user_id) ON DELETE CASCADE,
+  user_id UUID NOT NULL UNIQUE REFERENCES app_user(user_id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   location_text VARCHAR(500),
   billing_email VARCHAR(255),
@@ -130,7 +140,7 @@ CREATE TABLE IF NOT EXISTS reservation (
   reservation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   posting_id UUID NOT NULL REFERENCES bundle_posting(posting_id) ON DELETE CASCADE,
   org_id UUID NOT NULL REFERENCES organisation(org_id) ON DELETE CASCADE,
-  reserved_by_user_id UUID REFERENCES user_account(user_id) ON DELETE SET NULL,
+  reserved_by_user_id UUID REFERENCES app_user(user_id) ON DELETE SET NULL,
 
   reserved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   status reservation_status NOT NULL DEFAULT 'RESERVED',
@@ -147,7 +157,7 @@ CREATE TABLE IF NOT EXISTS reservation (
 CREATE TABLE IF NOT EXISTS reservation_status_history (
   history_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID NOT NULL REFERENCES reservation(reservation_id) ON DELETE CASCADE,
-  changed_by_user_id UUID REFERENCES user_account(user_id) ON DELETE SET NULL,
+  changed_by_user_id UUID REFERENCES app_user(user_id) ON DELETE SET NULL,
   old_status reservation_status NOT NULL,
   new_status reservation_status NOT NULL,
   changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -231,6 +241,7 @@ CREATE TABLE IF NOT EXISTS seller_metrics_weekly (
   PRIMARY KEY (seller_id, week_start)
 );
 
+
 CREATE OR REPLACE FUNCTION assert_user_role(
   p_user_id UUID,
   p_allowed_roles user_role[]
@@ -242,11 +253,11 @@ DECLARE
   v_role user_role;
 BEGIN
   SELECT role INTO v_role
-  FROM user_account
+  FROM app_user
   WHERE user_id = p_user_id;
 
   IF v_role IS NULL THEN
-    RAISE EXCEPTION 'User account % does not exist', p_user_id;
+    RAISE EXCEPTION 'App user % does not exist (is the auth user linked?)', p_user_id;
   END IF;
 
   IF NOT (v_role = ANY (p_allowed_roles)) THEN
@@ -400,6 +411,7 @@ CREATE TRIGGER rescue_event_requires_collected
 BEFORE INSERT ON rescue_event
 FOR EACH ROW
 EXECUTE FUNCTION trg_rescue_event_requires_collected();
+
 
 CREATE INDEX IF NOT EXISTS idx_bundle_posting_status_pickup
   ON bundle_posting (status, pickup_start_at);
