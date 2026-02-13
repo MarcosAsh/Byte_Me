@@ -1,6 +1,7 @@
 package com.byteme.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -65,6 +66,7 @@ public class IssueController {
 
     // Respond to issue
     @PostMapping("/{id}/respond")
+    @Transactional
     public ResponseEntity<?> respond(@PathVariable UUID id, @RequestBody RespondRequest req) {
         var issue = issueRepo.findById(id).orElse(null);
         if (issue == null) return ResponseEntity.notFound().build();
@@ -84,6 +86,7 @@ public class IssueController {
 
     // Resolve issue
     @PostMapping("/{id}/resolve")
+    @Transactional
     public ResponseEntity<?> resolve(@PathVariable UUID id) {
         var issue = issueRepo.findById(id).orElse(null);
         if (issue == null) return ResponseEntity.notFound().build();

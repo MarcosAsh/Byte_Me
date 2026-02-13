@@ -41,8 +41,8 @@ export default function TermsPage() {
             <li><strong>Third-Party Social Media Service</strong> means services provided by third parties.</li>
             <li>
               <strong>Website</strong> refers to Byte Me accessible from{" "}
-              <a href="http://www.bytemeexe.com" target="_blank">
-                www.bytemeexe.com
+              <a href="https://frontend-production-c253c.up.railway.app/" target="_blank">
+                https://frontend-production-c253c.up.railway.app/
               </a>
             </li>
             <li><strong>You</strong> means the user accessing the Service.</li>
@@ -181,7 +181,7 @@ export default function TermsPage() {
               <a href="/support"
                target="_blank"
                 className="text-blue-600 underline hover:text-blue-800">
-                www.byteme.com/support
+                https://frontend-production-c253c.up.railway.app/support
               </a>
             </li>
           </ul>

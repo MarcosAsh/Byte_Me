@@ -20,7 +20,7 @@ export default function PrivacyPage() {
 
           <ul className="ml-6">
             <li>
-              Visit our website at <a href="http://www.ByteMeExe.com">http://www.ByteMeExe.com</a> or any website of ours that links to this Privacy Notice
+              Visit our website at <a href="https://frontend-production-c253c.up.railway.app/">https://frontend-production-c253c.up.railway.app/</a> or any website of ours that links to this Privacy Notice
             </li>
             <li>
               Use ByteMe. A marketplace connecting surplus food with the people who can actually use it.
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
 
           <h2>13. Contact</h2>
           <p>
-            Email: <a href="mailto:privacy@bytemeexe.com">privacy@bytemeexe.com</a>
+            Email: <a href="mailto:privacy@byteme.com">privacy@byteme.com</a>
           </p>
 
           <h2>14. Review or Delete Data</h2>

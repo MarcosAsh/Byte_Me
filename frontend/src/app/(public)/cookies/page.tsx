@@ -53,8 +53,8 @@ export default function CookiePage() {
             </li>
             <li>
               <strong>Website</strong> refers to byte me, accessible from{" "}
-              <a href="http://www.bytemeexe.com" target="_blank">
-                www.bytemeexe.com
+              <a href="https://frontend-production-c253c.up.railway.app/" target="_blank">
+                https://frontend-production-c253c.up.railway.app/
               </a>.
             </li>
             <li>
@@ -140,8 +140,8 @@ export default function CookiePage() {
           <ul className="ml-6">
             <li>
               By visiting this page on our website:{" "}
-              <a href="http://www.bytemeexe/support" target="_blank">
-                www.bytemeexe/support
+              <a href="https://frontend-production-c253c.up.railway.app/support" target="_blank">
+                https://frontend-production-c253c.up.railway.app/support
               </a>
             </li>
           </ul>

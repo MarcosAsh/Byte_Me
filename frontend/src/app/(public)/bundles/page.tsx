@@ -1,27 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-
-const CATEGORIES = ["All", "Bakery", "Produce", "Dairy", "Meat", "Prepared"];
-
-const BUNDLES = [
-  { id: "1", title: "Fresh Bakery Bundle", seller: "Corner Bakery", price: 8.99, originalPrice: 24.99, category: "Bakery", items: 5, expires: "2 hours" },
-  { id: "2", title: "Organic Veggie Box", seller: "Green Grocer", price: 12.99, originalPrice: 35.00, category: "Produce", items: 8, expires: "1 day" },
-  { id: "3", title: "Dairy Essentials", seller: "Farm Fresh", price: 6.99, originalPrice: 18.50, category: "Dairy", items: 4, expires: "3 hours" },
-  { id: "4", title: "Deli Meat Selection", seller: "Main St Deli", price: 15.99, originalPrice: 42.00, category: "Meat", items: 3, expires: "4 hours" },
-  { id: "5", title: "Ready-to-Eat Meals", seller: "Chef's Kitchen", price: 9.99, originalPrice: 28.00, category: "Prepared", items: 2, expires: "6 hours" },
-  { id: "6", title: "Artisan Bread Pack", seller: "Corner Bakery", price: 5.99, originalPrice: 16.00, category: "Bakery", items: 4, expires: "1 hour" },
-];
+import { useState, useEffect } from "react";
+import { bundlesApi } from "@/lib/api/api";
 
 export default function BundlesPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [bundles, setBundles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = BUNDLES.filter((b) => {
-    const matchSearch = b.title.toLowerCase().includes(search.toLowerCase()) || b.seller.toLowerCase().includes(search.toLowerCase());
-    return matchSearch && (category === "All" || b.category === category);
+  useEffect(() => {
+    bundlesApi.list().then((data) => {
+      setBundles(data.content || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const filtered = bundles.filter((b) => {
+    const title = (b.title || "").toLowerCase();
+    const seller = (b.seller?.name || "").toLowerCase();
+    const matchSearch = title.includes(search.toLowerCase()) || seller.includes(search.toLowerCase());
+    const cat = b.category?.name || "";
+    return matchSearch && (category === "All" || cat === category);
   });
+
+  const categories = ["All", ...Array.from(new Set(bundles.map((b) => b.category?.name).filter(Boolean)))];
+
+  const formatPrice = (cents: number) => (cents / 100).toFixed(2);
+
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  if (loading) {
+    return <div className="page"><p>Loading bundles...</p></div>;
+  }
 
   return (
     <div className="page">
@@ -33,32 +48,36 @@ export default function BundlesPage() {
       <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="input" placeholder="Search bundles..." />
 
       <div className="filters mt-4">
-        {CATEGORIES.map((c) => (
+        {categories.map((c) => (
           <button key={c} onClick={() => setCategory(c)} className={`filter-btn ${category === c ? "active" : ""}`}>{c}</button>
         ))}
       </div>
 
       <div className="grid grid-3 mt-6">
-        {filtered.map((b) => (
-          <Link key={b.id} href={`/bundles/${b.id}`} className="bundle-card">
-            <div className="bundle-image" />
-            <div className="bundle-content">
-              <div className="bundle-title">{b.title}</div>
-              <div className="bundle-seller">{b.seller}</div>
-              <div className="bundle-badges">
-                <span className="badge badge-primary">{b.items} items</span>
-                <span className="badge badge-warning">{b.expires}</span>
-              </div>
-              <div className="bundle-footer">
-                <div>
-                  <span className="bundle-price">${b.price.toFixed(2)}</span>
-                  <span className="bundle-original-price">${b.originalPrice.toFixed(2)}</span>
+        {filtered.map((b) => {
+          const available = b.quantityTotal - b.quantityReserved;
+          const discounted = b.discountPct > 0 ? Math.round(b.priceCents * (1 - b.discountPct / 100)) : b.priceCents;
+          return (
+            <Link key={b.postingId} href={`/bundles/${b.postingId}`} className="bundle-card">
+              <div className="bundle-image" />
+              <div className="bundle-content">
+                <div className="bundle-title">{b.title}</div>
+                <div className="bundle-seller">{b.seller?.name}</div>
+                <div className="bundle-badges">
+                  <span className="badge badge-primary">{available} available</span>
+                  {b.discountPct > 0 && <span className="badge badge-warning">{b.discountPct}% off</span>}
                 </div>
-                <span className="btn btn-primary btn-sm">View</span>
+                <div className="bundle-footer">
+                  <div>
+                    <span className="bundle-price">${formatPrice(discounted)}</span>
+                    {b.discountPct > 0 && <span className="bundle-original-price">${formatPrice(b.priceCents)}</span>}
+                  </div>
+                  <span className="btn btn-primary btn-sm">View</span>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       {filtered.length === 0 && <div className="empty-state">No bundles found matching your search.</div>}
