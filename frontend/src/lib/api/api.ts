@@ -187,3 +187,37 @@ export const issuesApi = {
 export const categoriesApi = {
   list: () => fetchApi('/categories'),
 };
+
+// Forecasting
+export const forecastApi = {
+  history: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/history/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  results: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  comparison: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/comparison/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  recommendations: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/recommendations/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  run: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/run/${sellerId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  metrics: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/metrics/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+};

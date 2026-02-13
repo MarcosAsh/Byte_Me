@@ -147,3 +147,61 @@ export interface SellThroughResponse {
   collectionRate: number;
   cancelRate: number;
 }
+
+// Forecasting
+export interface DemandObservationResponse {
+  obsId: string;
+  date: string;
+  dayOfWeek: number;
+  categoryName: string;
+  windowLabel: string;
+  discountPct: number;
+  weatherFlag: boolean;
+  observedReservations: number;
+  observedNoShowRate: number;
+}
+
+export interface ForecastOutputResponse {
+  outputId: string;
+  modelName: string;
+  postingId: string;
+  postingTitle: string;
+  predictedReservations: number;
+  predictedNoShowProb: number;
+  confidence: number;
+  rationaleText: string;
+}
+
+export interface ForecastRunResponse {
+  runId: string;
+  modelName: string;
+  trainedAt: string;
+  trainStart: string;
+  trainEnd: string;
+  evalStart: string;
+  evalEnd: string;
+  metricsJson: string;
+}
+
+export interface RecommendationResponse {
+  postingId: string;
+  postingTitle: string;
+  currentQuantity: number;
+  recommendedQuantity: number;
+  predictedReservations: number;
+  noShowProb: number;
+  confidence: number;
+  rationale: string;
+  recommendation: string;
+}
+
+export interface WeeklyMetricsResponse {
+  weekStart: string;
+  postedCount: number;
+  reservedCount: number;
+  collectedCount: number;
+  noShowCount: number;
+  expiredCount: number;
+  sellThroughRate: number;
+  wasteAvoidedGrams: number;
+}

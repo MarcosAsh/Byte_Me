@@ -76,10 +76,7 @@ public class OrderController {
         reservation.setClaimCodeHash(claimCodeHash);
         reservation.setClaimCodeLast4(claimCodeLast4);
 
-        // Update bundle quantity
-        bundle.setQuantityReserved(bundle.getQuantityReserved() + 1);
-        bundleRepo.save(bundle);
-
+        // Trigger handles quantity_reserved increment
         var saved = reservationRepo.save(reservation);
 
         // Return order response
@@ -144,11 +141,7 @@ public class OrderController {
         reservation.setStatus(Reservation.Status.CANCELLED);
         reservation.setCancelledAt(Instant.now());
 
-        // Release bundle quantity
-        var bundle = reservation.getPosting();
-        bundle.setQuantityReserved(bundle.getQuantityReserved() - 1);
-        bundleRepo.save(bundle);
-
+        // Trigger handles quantity_reserved decrement
         return ResponseEntity.ok(reservationRepo.save(reservation));
     }
 
