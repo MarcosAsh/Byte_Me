@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import {useState,useEffect} from "react";
+import { useAuth } from "@/store/auth.store";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const { user, init } = useAuth();
+
+  useEffect(() => { init(); }, [init]);
+  const isOrgAdmin = user?.role === "ORG_ADMIN";
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[var(--border)]">
@@ -60,12 +65,42 @@ export default function Header() {
           </NavLink>
 
           <div className="pt-4 border-t border-[var(--border)] space-y-2">
-            <Link href="/login" className="btn btn-secondary w-full text-sm">
-              Log In
-            </Link>
-            <Link href="/register" className="btn btn-primary w-full text-sm">
-              Sign Up
-            </Link>
+            {user ? (
+              isOrgAdmin ? (
+                <Link
+                  href="/home"
+                  onClick={() => setOpen(false)}
+                  className="btn btn-primary w-full text-sm"
+                >
+                  Home
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="btn btn-primary w-full text-sm"
+                >
+                  Dashboard
+                </Link>
+              )
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="btn btn-secondary w-full text-sm"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setOpen(false)}
+                  className="btn btn-primary w-full text-sm"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
