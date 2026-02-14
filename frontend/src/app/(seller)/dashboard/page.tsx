@@ -182,7 +182,7 @@ export default function SellerDashboardPage() {
                             style={{ fontSize: "0.75rem", padding: "4px 10px" }}
                             onClick={() => handleCollect(order.reservationId)}
                           >
-                            Collect
+                            Mark Collected
                           </button>
                           <button
                             className="btn btn-secondary"
