@@ -39,9 +39,24 @@
 
   /* Status Colors */
   --success: var(--green-500);
+  --success-dark: var(--green-600);
   --error: #ef4444;
+  --error-dark: #dc2626;
   --warning: #f59e0b;
+  --warning-dark: #ca8a04;
   --info: #3b82f6;
+  --info-dark: #2563eb;
+  --orange: #ea580c;
+
+  /* Status badge backgrounds */
+  --status-reserved-bg: #dbeafe;
+  --status-reserved-text: var(--info-dark);
+  --status-collected-bg: var(--green-100);
+  --status-collected-text: var(--success-dark);
+  --status-cancelled-bg: #fef2f2;
+  --status-cancelled-text: var(--error-dark);
+  --status-expired-bg: var(--gray-100);
+  --status-expired-text: var(--gray-500);
 }
 
 @theme inline {

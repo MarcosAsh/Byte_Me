@@ -3,18 +3,23 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { bundlesApi } from "@/lib/api/api";
+import type { BundlePosting } from "@/lib/api/types";
 
 export default function BundlesPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [bundles, setBundles] = useState<any[]>([]);
+  const [bundles, setBundles] = useState<BundlePosting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     bundlesApi.list().then((data) => {
       setBundles(data.content || []);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {
+      setError("Failed to load bundles. Please try again.");
+      setLoading(false);
+    });
   }, []);
 
   const filtered = bundles.filter((b) => {
@@ -25,7 +30,7 @@ export default function BundlesPage() {
     return matchSearch && (category === "All" || cat === category);
   });
 
-  const categories = ["All", ...Array.from(new Set(bundles.map((b) => b.category?.name).filter(Boolean)))];
+  const categoryNames = ["All", ...Array.from(new Set(bundles.map((b) => b.category?.name).filter((n): n is string => !!n)))];
 
   const formatPrice = (cents: number) => (cents / 100).toFixed(2);
 
@@ -38,6 +43,14 @@ export default function BundlesPage() {
     return <div className="page"><p>Loading bundles...</p></div>;
   }
 
+  if (error) {
+    return (
+      <div className="page">
+        <div className="alert alert-error" role="alert">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -48,7 +61,7 @@ export default function BundlesPage() {
       <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="input" placeholder="Search bundles..." />
 
       <div className="filters mt-4">
-        {categories.map((c) => (
+        {categoryNames.map((c) => (
           <button key={c} onClick={() => setCategory(c)} className={`filter-btn ${category === c ? "active" : ""}`}>{c}</button>
         ))}
       </div>

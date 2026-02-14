@@ -21,31 +21,45 @@ public class OrderController {
     private final BundlePostingRepository bundleRepo;
     private final OrganisationRepository orgRepo;
     private final OrganisationStreakCacheRepository streakRepo;
+    private final SellerRepository sellerRepo;
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom random = new SecureRandom();
 
     // Constructor injection
     public OrderController(ReservationRepository reservationRepo, BundlePostingRepository bundleRepo,
                            OrganisationRepository orgRepo, OrganisationStreakCacheRepository streakRepo,
-                           PasswordEncoder passwordEncoder) {
+                           SellerRepository sellerRepo, PasswordEncoder passwordEncoder) {
         this.reservationRepo = reservationRepo;
         this.bundleRepo = bundleRepo;
         this.orgRepo = orgRepo;
         this.streakRepo = streakRepo;
+        this.sellerRepo = sellerRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
     // Get orders by org
     @GetMapping("/org/{orgId}")
-    public List<Reservation> getByOrg(@PathVariable UUID orgId) {
-        return reservationRepo.findByOrganisationOrgId(orgId);
+    public ResponseEntity<?> getByOrg(@PathVariable UUID orgId) {
+        UUID userId = (UUID) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var org = orgRepo.findById(orgId).orElse(null);
+        if (org == null) return ResponseEntity.notFound().build();
+        if (!org.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return ResponseEntity.ok(reservationRepo.findByOrganisationOrgId(orgId));
     }
 
     // Get orders by seller (returns DTOs with posting title and org name)
     @GetMapping("/seller/{sellerId}")
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public List<Map<String, Object>> getBySeller(@PathVariable UUID sellerId) {
-        return reservationRepo.findByPostingSellerSellerId(sellerId).stream().map(r -> {
+    public ResponseEntity<?> getBySeller(@PathVariable UUID sellerId) {
+        UUID userId = (UUID) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return ResponseEntity.ok(reservationRepo.findByPostingSellerSellerId(sellerId).stream().map(r -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("reservationId", r.getReservationId());
             map.put("postingTitle", r.getPosting().getTitle());
@@ -55,7 +69,7 @@ public class OrderController {
             if (r.getCollectedAt() != null) map.put("collectedAt", r.getCollectedAt().toString());
             if (r.getCancelledAt() != null) map.put("cancelledAt", r.getCancelledAt().toString());
             return map;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList()));
     }
 
     // Create new order

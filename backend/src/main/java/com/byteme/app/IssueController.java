@@ -1,11 +1,11 @@
 package com.byteme.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 // Issue report controller
@@ -17,31 +17,51 @@ public class IssueController {
     private final IssueReportRepository issueRepo;
     private final ReservationRepository reservationRepo;
     private final OrganisationRepository orgRepo;
+    private final SellerRepository sellerRepo;
 
     // Constructor injection
     public IssueController(IssueReportRepository issueRepo, ReservationRepository reservationRepo,
-                           OrganisationRepository orgRepo) {
+                           OrganisationRepository orgRepo, SellerRepository sellerRepo) {
         this.issueRepo = issueRepo;
         this.reservationRepo = reservationRepo;
         this.orgRepo = orgRepo;
+        this.sellerRepo = sellerRepo;
     }
 
     // Get issues by seller
     @GetMapping("/seller/{sellerId}")
-    public List<IssueReport> getBySeller(@PathVariable UUID sellerId) {
-        return issueRepo.findBySeller(sellerId);
+    public ResponseEntity<?> getBySeller(@PathVariable UUID sellerId) {
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return ResponseEntity.ok(issueRepo.findBySeller(sellerId));
     }
 
     // Get open issues by seller
     @GetMapping("/seller/{sellerId}/open")
-    public List<IssueReport> getOpenBySeller(@PathVariable UUID sellerId) {
-        return issueRepo.findOpenBySeller(sellerId);
+    public ResponseEntity<?> getOpenBySeller(@PathVariable UUID sellerId) {
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return ResponseEntity.ok(issueRepo.findOpenBySeller(sellerId));
     }
 
     // Get issues by org
     @GetMapping("/org/{orgId}")
-    public List<IssueReport> getByOrg(@PathVariable UUID orgId) {
-        return issueRepo.findByOrganisationOrgId(orgId);
+    public ResponseEntity<?> getByOrg(@PathVariable UUID orgId) {
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var org = orgRepo.findById(orgId).orElse(null);
+        if (org == null) return ResponseEntity.notFound().build();
+        if (!org.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return ResponseEntity.ok(issueRepo.findByOrganisationOrgId(orgId));
     }
 
     // Create new issue

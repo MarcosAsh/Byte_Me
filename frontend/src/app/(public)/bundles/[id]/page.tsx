@@ -5,11 +5,12 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { bundlesApi, ordersApi } from "@/lib/api/api";
 import { useAuth } from "@/store/auth.store";
+import type { BundlePosting } from "@/lib/api/types";
 
 export default function BundleDetailPage() {
   const params = useParams();
   const { user, init } = useAuth();
-  const [bundle, setBundle] = useState<any>(null);
+  const [bundle, setBundle] = useState<BundlePosting | null>(null);
   const [loading, setLoading] = useState(true);
   const [reserving, setReserving] = useState(false);
   const [reserved, setReserved] = useState(false);
@@ -22,7 +23,7 @@ export default function BundleDetailPage() {
     if (!params.id) return;
     bundlesApi.getById(params.id as string)
       .then((data) => { setBundle(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setError("Failed to load bundle."); setLoading(false); });
   }, [params.id]);
 
   if (loading) {
@@ -60,8 +61,8 @@ export default function BundleDetailPage() {
       );
       setReserved(true);
       setClaimCode(result.claimCode || null);
-    } catch (e: any) {
-      setError(e.message || "Failed to reserve bundle");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to reserve bundle");
     } finally {
       setReserving(false);
     }
@@ -118,7 +119,7 @@ export default function BundleDetailPage() {
             )}
           </div>
 
-          {error && <p className="text-error mt-4">{error}</p>}
+          {error && <p className="text-error mt-4" role="alert">{error}</p>}
 
           {reserved ? (
             <div className="reservation-success">

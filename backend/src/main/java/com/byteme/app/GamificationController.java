@@ -1,6 +1,7 @@
 package com.byteme.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,11 +31,22 @@ public class GamificationController {
         this.orgBadgeRepo = orgBadgeRepo;
     }
 
+    // Check that the current user owns this org profile
+    private ResponseEntity<?> checkOrgOwnership(Organisation org) {
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!org.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return null;
+    }
+
     // Get org streak
     @GetMapping("/streak/{orgId}")
     public ResponseEntity<?> getStreak(@PathVariable UUID orgId) {
         var org = orgRepo.findById(orgId).orElse(null);
         if (org == null) return ResponseEntity.notFound().build();
+        var denied = checkOrgOwnership(org);
+        if (denied != null) return denied;
 
         var streak = streakRepo.findById(orgId).orElse(null);
         if (streak == null) {
@@ -53,6 +65,8 @@ public class GamificationController {
     public ResponseEntity<?> getStats(@PathVariable UUID orgId) {
         var org = orgRepo.findById(orgId).orElse(null);
         if (org == null) return ResponseEntity.notFound().build();
+        var denied = checkOrgOwnership(org);
+        if (denied != null) return denied;
 
         // Calculate stats
         var streak = streakRepo.findById(orgId).orElse(null);
@@ -72,8 +86,12 @@ public class GamificationController {
 
     // Get org badges
     @GetMapping("/badges/{orgId}")
-    public List<OrganisationBadge> getOrgBadges(@PathVariable UUID orgId) {
-        return orgBadgeRepo.findByOrgId(orgId);
+    public ResponseEntity<?> getOrgBadges(@PathVariable UUID orgId) {
+        var org = orgRepo.findById(orgId).orElse(null);
+        if (org == null) return ResponseEntity.notFound().build();
+        var denied = checkOrgOwnership(org);
+        if (denied != null) return denied;
+        return ResponseEntity.ok(orgBadgeRepo.findByOrgId(orgId));
     }
 
     // Get all badges

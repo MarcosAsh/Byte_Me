@@ -61,7 +61,7 @@ export const bundlesApi = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  update: (id: string, data: any, token: string) =>
+  update: (id: string, data: { title?: string; description?: string; quantityTotal?: number; priceCents?: number; discountPct?: number; allergensText?: string }, token: string) =>
     fetchApi(`/bundles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

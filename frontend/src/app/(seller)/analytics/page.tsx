@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/store/auth.store";
 import { forecastApi } from "@/lib/api/api";
 import type {
@@ -33,13 +33,7 @@ export default function SellerAnalyticsPage() {
   const sellerId = user?.profileId;
   const token = user?.token;
 
-  useEffect(() => {
-    if (!sellerId || !token) return;
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sellerId, token]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!sellerId || !token) return;
     setLoading(true);
     setError("");
@@ -59,7 +53,12 @@ export default function SellerAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [sellerId, token]);
+
+  useEffect(() => {
+    if (!sellerId || !token) return;
+    loadData();
+  }, [sellerId, token, loadData]);
 
   async function handleRunForecast() {
     if (!sellerId || !token) return;
@@ -140,7 +139,7 @@ export default function SellerAnalyticsPage() {
         </button>
       </div>
 
-      {error && <div className="alert alert-error mb-4">{error}</div>}
+      {error && <div className="alert alert-error mb-4" role="alert">{error}</div>}
 
       {/* Demand History Chart */}
       <div className="card mb-6">
@@ -203,7 +202,7 @@ export default function SellerAnalyticsPage() {
                     <td style={{ textAlign: "right", padding: "8px 12px", fontWeight: 600 }}>
                       {f.predictedReservations.toFixed(1)}
                     </td>
-                    <td style={{ textAlign: "right", padding: "8px 12px", color: f.predictedNoShowProb > 0.15 ? "#dc2626" : "inherit" }}>
+                    <td style={{ textAlign: "right", padding: "8px 12px", color: f.predictedNoShowProb > 0.15 ? "var(--error-dark)" : "inherit" }}>
                       {(f.predictedNoShowProb * 100).toFixed(0)}%
                     </td>
                     <td style={{ textAlign: "right", padding: "8px 12px" }}>
@@ -293,7 +292,7 @@ export default function SellerAnalyticsPage() {
                   </div>
                   <div>
                     <span style={{ color: "var(--color-muted)" }}>Recommended: </span>
-                    <strong style={{ color: r.recommendedQuantity < r.currentQuantity ? "#dc2626" : "#16a34a" }}>
+                    <strong style={{ color: r.recommendedQuantity < r.currentQuantity ? "var(--error-dark)" : "var(--success-dark)" }}>
                       {r.recommendedQuantity}
                     </strong>
                   </div>

@@ -1,6 +1,7 @@
 package com.byteme.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -34,11 +35,22 @@ public class ForecastController {
         this.bundleRepo = bundleRepo;
     }
 
+    // Check that the current user owns this seller profile
+    private ResponseEntity<?> checkSellerOwnership(Seller seller) {
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return null;
+    }
+
     // Get demand observation history for a seller
     @GetMapping("/history/{sellerId}")
     public ResponseEntity<?> getHistory(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
 
         var observations = observationRepo.findBySellerSellerIdOrderByDateDesc(sellerId);
         var result = observations.stream().map(o -> Map.of(
@@ -61,6 +73,8 @@ public class ForecastController {
     public ResponseEntity<?> getForecasts(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
 
         var outputs = outputRepo.findBySellerId(sellerId);
         var result = outputs.stream().map(o -> Map.of(
@@ -82,6 +96,8 @@ public class ForecastController {
     public ResponseEntity<?> getComparison(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
 
         var runs = runRepo.findAllByOrderByTrainedAtDesc();
         var result = runs.stream().map(r -> Map.of(
@@ -103,6 +119,8 @@ public class ForecastController {
     public ResponseEntity<?> getRecommendations(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
 
         var postings = bundleRepo.findBySeller_SellerId(sellerId).stream()
                 .filter(p -> p.getStatus() == BundlePosting.Status.ACTIVE)
@@ -143,6 +161,8 @@ public class ForecastController {
     public ResponseEntity<?> runForecast(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
 
         var result = forecastService.runForecast(sellerId);
         return ResponseEntity.ok(result);
@@ -153,6 +173,8 @@ public class ForecastController {
     public ResponseEntity<?> getMetrics(@PathVariable UUID sellerId) {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
 
         var metrics = metricsRepo.findBySellerIdOrderByWeekStartDesc(sellerId);
         var result = metrics.stream().map(m -> Map.of(

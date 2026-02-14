@@ -1,6 +1,7 @@
 package com.byteme.app;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -31,6 +32,11 @@ public class AnalyticsController {
         var seller = sellerRepo.findById(sellerId).orElse(null);
         if (seller == null) return ResponseEntity.notFound().build();
 
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+
         // Get bundles and reservations
         var bundles = bundleRepo.findBySeller_SellerId(sellerId);
         var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
@@ -55,6 +61,13 @@ public class AnalyticsController {
     // Get sell through rate
     @GetMapping("/sell-through/{sellerId}")
     public ResponseEntity<?> getSellThrough(@PathVariable UUID sellerId) {
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+
         var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
 
         // Calculate rates

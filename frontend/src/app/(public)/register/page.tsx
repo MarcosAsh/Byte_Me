@@ -89,12 +89,13 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="card">
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && <div className="alert alert-error" role="alert">{error}</div>}
 
           <div className="space-y-4">
             <div>
-              <label className="label">Business Name</label>
+              <label htmlFor="reg-name" className="label">Business Name</label>
               <input
+                id="reg-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -104,8 +105,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="label">Email</label>
+              <label htmlFor="reg-email" className="label">Email</label>
               <input
+                id="reg-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -115,8 +117,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="label">Password</label>
+              <label htmlFor="reg-password" className="label">Password</label>
               <input
+                id="reg-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -126,8 +129,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="label">Location (optional)</label>
+              <label htmlFor="reg-location" className="label">Location (optional)</label>
               <input
+                id="reg-location"
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -136,8 +140,9 @@ export default function RegisterPage() {
               />
             </div>
 
-            <label className="checkbox-label">
+            <label htmlFor="reg-seller" className="checkbox-label">
               <input
+                id="reg-seller"
                 type="checkbox"
                 checked={isSeller}
                 onChange={(e) => setIsSeller(e.target.checked)}
@@ -146,8 +151,9 @@ export default function RegisterPage() {
               <span>I am a seller</span>
             </label>
 
-            <label className="checkbox-label">
+            <label htmlFor="reg-tcs" className="checkbox-label">
               <input
+                id="reg-tcs"
                 type="checkbox"
                 checked={TCs}
                 onChange={(e) => setTCs(e.target.checked)}

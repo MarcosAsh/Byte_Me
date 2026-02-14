@@ -103,6 +103,12 @@ public class BundleController {
     public ResponseEntity<?> activate(@PathVariable UUID id) {
         var bundle = bundleRepo.findById(id).orElse(null);
         if (bundle == null) return ResponseEntity.notFound().build();
+
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!bundle.getSeller().getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Not your bundle");
+        }
+
         bundle.setStatus(BundlePosting.Status.ACTIVE);
         return ResponseEntity.ok(bundleRepo.save(bundle));
     }
@@ -112,6 +118,12 @@ public class BundleController {
     public ResponseEntity<?> close(@PathVariable UUID id) {
         var bundle = bundleRepo.findById(id).orElse(null);
         if (bundle == null) return ResponseEntity.notFound().build();
+
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!bundle.getSeller().getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Not your bundle");
+        }
+
         bundle.setStatus(BundlePosting.Status.CLOSED);
         return ResponseEntity.ok(bundleRepo.save(bundle));
     }

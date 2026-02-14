@@ -73,12 +73,13 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="card">
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && <div className="alert alert-error" role="alert">{error}</div>}
 
           <div className="space-y-4">
             <div>
-              <label className="label">Email</label>
+              <label htmlFor="login-email" className="label">Email</label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -88,8 +89,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="label">Password</label>
+              <label htmlFor="login-password" className="label">Password</label>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -98,8 +100,9 @@ export default function LoginPage() {
               />
             </div>
 
-            <label className="checkbox-label">
+            <label htmlFor="login-seller" className="checkbox-label">
               <input
+                id="login-seller"
                 type="checkbox"
                 checked={isSeller}
                 onChange={(e) => setIsSeller(e.target.checked)}

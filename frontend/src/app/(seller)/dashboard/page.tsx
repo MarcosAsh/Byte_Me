@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/store/auth.store";
 import { analyticsApi, ordersApi, issuesApi } from "@/lib/api/api";
@@ -27,13 +27,7 @@ export default function SellerDashboardPage() {
   const sellerId = user?.profileId;
   const token = user?.token;
 
-  useEffect(() => {
-    if (!sellerId || !token) return;
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sellerId, token]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!sellerId || !token) return;
     setLoading(true);
     setError("");
@@ -51,7 +45,12 @@ export default function SellerDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [sellerId, token]);
+
+  useEffect(() => {
+    if (!sellerId || !token) return;
+    loadData();
+  }, [sellerId, token, loadData]);
 
   async function handleCollect(id: string) {
     if (!token) return;
@@ -108,7 +107,7 @@ export default function SellerDashboardPage() {
         </p>
       </div>
 
-      {error && <div className="alert alert-error mb-4">{error}</div>}
+      {error && <div className="alert alert-error mb-4" role="alert">{error}</div>}
 
       {/* Stats grid */}
       {dashboard && (
@@ -117,15 +116,15 @@ export default function SellerDashboardPage() {
           <StatCard
             label="Sell-Through Rate"
             value={`${dashboard.sellThroughRate.toFixed(0)}%`}
-            color={dashboard.sellThroughRate >= 70 ? "#16a34a" : dashboard.sellThroughRate >= 40 ? "#ca8a04" : "#dc2626"}
+            color={dashboard.sellThroughRate >= 70 ? "var(--success-dark)" : dashboard.sellThroughRate >= 40 ? "var(--warning-dark)" : "var(--error-dark)"}
           />
-          <StatCard label="Collected" value={dashboard.collectedCount} color="#16a34a" />
-          <StatCard label="Cancelled" value={dashboard.cancelledCount} color={dashboard.cancelledCount > 0 ? "#dc2626" : undefined} />
-          <StatCard label="Expired" value={dashboard.expiredCount} color={dashboard.expiredCount > 0 ? "#ca8a04" : undefined} />
+          <StatCard label="Collected" value={dashboard.collectedCount} color="var(--success-dark)" />
+          <StatCard label="Cancelled" value={dashboard.cancelledCount} color={dashboard.cancelledCount > 0 ? "var(--error-dark)" : undefined} />
+          <StatCard label="Expired" value={dashboard.expiredCount} color={dashboard.expiredCount > 0 ? "var(--warning-dark)" : undefined} />
           <StatCard
             label="Open Issues"
             value={dashboard.openIssueCount}
-            color={dashboard.openIssueCount > 0 ? "#dc2626" : "#16a34a"}
+            color={dashboard.openIssueCount > 0 ? "var(--error-dark)" : "var(--success-dark)"}
           />
         </div>
       )}
@@ -228,8 +227,8 @@ export default function SellerDashboardPage() {
                         fontWeight: 600,
                         padding: "2px 8px",
                         borderRadius: "4px",
-                        backgroundColor: issue.type === "QUALITY" ? "#fef2f2" : issue.type === "UNAVAILABLE" ? "#fff7ed" : "#f0f9ff",
-                        color: issue.type === "QUALITY" ? "#dc2626" : issue.type === "UNAVAILABLE" ? "#ea580c" : "#2563eb",
+                        backgroundColor: issue.type === "QUALITY" ? "var(--status-cancelled-bg)" : issue.type === "UNAVAILABLE" ? "#fff7ed" : "#f0f9ff",
+                        color: issue.type === "QUALITY" ? "var(--error-dark)" : issue.type === "UNAVAILABLE" ? "var(--orange)" : "var(--info-dark)",
                       }}
                     >
                       {issue.type}
@@ -267,10 +266,10 @@ function StatCard({ label, value, color }: { label: string; value: string | numb
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, { bg: string; text: string }> = {
-    RESERVED: { bg: "#dbeafe", text: "#2563eb" },
-    COLLECTED: { bg: "#dcfce7", text: "#16a34a" },
-    CANCELLED: { bg: "#fef2f2", text: "#dc2626" },
-    EXPIRED: { bg: "#f3f4f6", text: "#6b7280" },
+    RESERVED: { bg: "var(--status-reserved-bg)", text: "var(--status-reserved-text)" },
+    COLLECTED: { bg: "var(--status-collected-bg)", text: "var(--status-collected-text)" },
+    CANCELLED: { bg: "var(--status-cancelled-bg)", text: "var(--status-cancelled-text)" },
+    EXPIRED: { bg: "var(--status-expired-bg)", text: "var(--status-expired-text)" },
   };
   const c = colors[status] || colors.EXPIRED;
   return (

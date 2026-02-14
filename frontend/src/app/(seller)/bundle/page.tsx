@@ -1,10 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/store/auth.store";
 import { bundlesApi, categoriesApi } from "@/lib/api/api";
 import type { Category } from "@/lib/api/types";
+
+interface BundleFormState {
+  title: string;
+  description: string;
+  categoryId: string;
+  pickupDate: string;
+  pickupStartTime: string;
+  pickupEndTime: string;
+  quantity: number;
+  priceGbp: string;
+  discountPct: number;
+  allergensText: string;
+  activate: boolean;
+}
+
+type BundleFormAction =
+  | { type: "SET_FIELD"; field: keyof BundleFormState; value: string | number | boolean }
+  | { type: "RESET" };
+
+const initialFormState: BundleFormState = {
+  title: "",
+  description: "",
+  categoryId: "",
+  pickupDate: "",
+  pickupStartTime: "",
+  pickupEndTime: "",
+  quantity: 1,
+  priceGbp: "",
+  discountPct: 0,
+  allergensText: "",
+  activate: true,
+};
+
+function formReducer(state: BundleFormState, action: BundleFormAction): BundleFormState {
+  switch (action.type) {
+    case "SET_FIELD":
+      return { ...state, [action.field]: action.value };
+    case "RESET":
+      return initialFormState;
+  }
+}
 
 export default function CreateBundlePage() {
   const { user } = useAuth();
@@ -13,23 +54,17 @@ export default function CreateBundlePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // form fields
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [pickupDate, setPickupDate] = useState("");
-  const [pickupStartTime, setPickupStartTime] = useState("");
-  const [pickupEndTime, setPickupEndTime] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [priceGbp, setPriceGbp] = useState("");
-  const [discountPct, setDiscountPct] = useState(0);
-  const [allergensText, setAllergensText] = useState("");
-  const [activate, setActivate] = useState(true);
+  const [form, dispatch] = useReducer(formReducer, initialFormState);
 
   useEffect(() => {
-    categoriesApi.list().then(setCategories).catch(() => {});
+    categoriesApi.list().then(setCategories).catch(() => {
+      setError("Failed to load categories.");
+    });
   }, []);
+
+  function setField(field: keyof BundleFormState, value: string | number | boolean) {
+    dispatch({ type: "SET_FIELD", field, value });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,19 +73,17 @@ export default function CreateBundlePage() {
     setError("");
     setSuccess("");
 
-    // validation
-    if (!title.trim()) { setError("Title is required."); return; }
-    if (!pickupDate || !pickupStartTime || !pickupEndTime) {
+    if (!form.title.trim()) { setError("Title is required."); return; }
+    if (!form.pickupDate || !form.pickupStartTime || !form.pickupEndTime) {
       setError("Pickup date and times are required."); return;
     }
-    if (quantity < 1) { setError("Quantity must be at least 1."); return; }
+    if (form.quantity < 1) { setError("Quantity must be at least 1."); return; }
 
-    const price = parseFloat(priceGbp);
+    const price = parseFloat(form.priceGbp);
     if (isNaN(price) || price < 0) { setError("Enter a valid price."); return; }
 
-    // build pickup timestamps
-    const pickupStartAt = new Date(`${pickupDate}T${pickupStartTime}`).toISOString();
-    const pickupEndAt = new Date(`${pickupDate}T${pickupEndTime}`).toISOString();
+    const pickupStartAt = new Date(`${form.pickupDate}T${form.pickupStartTime}`).toISOString();
+    const pickupEndAt = new Date(`${form.pickupDate}T${form.pickupEndTime}`).toISOString();
 
     if (pickupEndAt <= pickupStartAt) {
       setError("Pickup end time must be after start time."); return;
@@ -59,30 +92,20 @@ export default function CreateBundlePage() {
     setSubmitting(true);
     try {
       await bundlesApi.create({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        categoryId: categoryId || undefined,
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        categoryId: form.categoryId || undefined,
         pickupStartAt,
         pickupEndAt,
-        quantityTotal: quantity,
+        quantityTotal: form.quantity,
         priceCents: Math.round(price * 100),
-        discountPct: discountPct || undefined,
-        allergensText: allergensText.trim() || undefined,
-        activate,
+        discountPct: form.discountPct || undefined,
+        allergensText: form.allergensText.trim() || undefined,
+        activate: form.activate,
       }, user.token);
 
       setSuccess("Bundle created successfully!");
-      // reset form
-      setTitle("");
-      setDescription("");
-      setCategoryId("");
-      setPickupDate("");
-      setPickupStartTime("");
-      setPickupEndTime("");
-      setQuantity(1);
-      setPriceGbp("");
-      setDiscountPct(0);
-      setAllergensText("");
+      dispatch({ type: "RESET" });
     } catch {
       setError("Failed to create bundle. Please try again.");
     } finally {
@@ -108,10 +131,10 @@ export default function CreateBundlePage() {
         <p className="page-subtitle">Post surplus food for organisations to reserve.</p>
       </div>
 
-      {error && <div className="alert alert-error mb-4">{error}</div>}
+      {error && <div className="alert alert-error mb-4" role="alert">{error}</div>}
       {success && (
-        <div className="card mb-4" style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1rem" }}>
-          <p style={{ color: "#16a34a", fontWeight: 500 }}>{success}</p>
+        <div className="card mb-4" style={{ backgroundColor: "var(--green-50)", border: "1px solid var(--green-200)", padding: "1rem" }}>
+          <p style={{ color: "var(--success-dark)", fontWeight: 500 }}>{success}</p>
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
             <button className="btn btn-primary" style={{ fontSize: "0.85rem" }} onClick={() => setSuccess("")}>
               Create Another
@@ -125,45 +148,45 @@ export default function CreateBundlePage() {
 
       {!success && (
         <form onSubmit={handleSubmit} className="card" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          {/* Title */}
           <div>
-            <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+            <label htmlFor="bundle-title" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Title *
             </label>
             <input
+              id="bundle-title"
               className="input"
               type="text"
               placeholder="e.g. Mixed Bakery Bag"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={form.title}
+              onChange={(e) => setField("title", e.target.value)}
               required
             />
           </div>
 
-          {/* Description */}
           <div>
-            <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+            <label htmlFor="bundle-description" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Description
             </label>
             <textarea
+              id="bundle-description"
               className="input"
               placeholder="What's included? How many items typically?"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={form.description}
+              onChange={(e) => setField("description", e.target.value)}
               rows={3}
               style={{ resize: "vertical" }}
             />
           </div>
 
-          {/* Category */}
           <div>
-            <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+            <label htmlFor="bundle-category" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Category
             </label>
             <select
+              id="bundle-category"
               className="input"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              value={form.categoryId}
+              onChange={(e) => setField("categoryId", e.target.value)}
             >
               <option value="">Select a category</option>
               {categories.map((c) => (
@@ -172,135 +195,137 @@ export default function CreateBundlePage() {
             </select>
           </div>
 
-          {/* Pickup date + times */}
           <div>
-            <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+            <label htmlFor="bundle-date" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Pickup Date *
             </label>
             <input
+              id="bundle-date"
               className="input"
               type="date"
-              value={pickupDate}
-              onChange={(e) => setPickupDate(e.target.value)}
+              value={form.pickupDate}
+              onChange={(e) => setField("pickupDate", e.target.value)}
               required
             />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+              <label htmlFor="bundle-start" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
                 Pickup Start *
               </label>
               <input
+                id="bundle-start"
                 className="input"
                 type="time"
-                value={pickupStartTime}
-                onChange={(e) => setPickupStartTime(e.target.value)}
+                value={form.pickupStartTime}
+                onChange={(e) => setField("pickupStartTime", e.target.value)}
                 required
               />
             </div>
             <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+              <label htmlFor="bundle-end" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
                 Pickup End *
               </label>
               <input
+                id="bundle-end"
                 className="input"
                 type="time"
-                value={pickupEndTime}
-                onChange={(e) => setPickupEndTime(e.target.value)}
+                value={form.pickupEndTime}
+                onChange={(e) => setField("pickupEndTime", e.target.value)}
                 required
               />
             </div>
           </div>
 
-          {/* Quantity + Price */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+              <label htmlFor="bundle-quantity" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
                 Quantity *
               </label>
               <input
+                id="bundle-quantity"
                 className="input"
                 type="number"
                 min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                value={form.quantity}
+                onChange={(e) => setField("quantity", parseInt(e.target.value) || 1)}
                 required
               />
             </div>
             <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+              <label htmlFor="bundle-price" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
                 Price (GBP) *
               </label>
               <input
+                id="bundle-price"
                 className="input"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="3.50"
-                value={priceGbp}
-                onChange={(e) => setPriceGbp(e.target.value)}
+                value={form.priceGbp}
+                onChange={(e) => setField("priceGbp", e.target.value)}
                 required
               />
             </div>
           </div>
 
-          {/* Discount */}
           <div>
-            <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+            <label htmlFor="bundle-discount" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Discount (%)
             </label>
             <input
+              id="bundle-discount"
               className="input"
               type="number"
               min={0}
               max={100}
-              value={discountPct}
-              onChange={(e) => setDiscountPct(parseInt(e.target.value) || 0)}
+              value={form.discountPct}
+              onChange={(e) => setField("discountPct", parseInt(e.target.value) || 0)}
             />
             <p className="text-muted" style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>
               How much off the original price this bundle represents.
             </p>
           </div>
 
-          {/* Allergens */}
           <div>
-            <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+            <label htmlFor="bundle-allergens" style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Allergen Information
             </label>
             <input
+              id="bundle-allergens"
               className="input"
               type="text"
               placeholder="e.g. gluten, dairy, eggs, nuts"
-              value={allergensText}
-              onChange={(e) => setAllergensText(e.target.value)}
+              value={form.allergensText}
+              onChange={(e) => setField("allergensText", e.target.value)}
             />
             <p className="text-muted" style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>
               List any allergens present in this bundle. This is shown to organisations before they reserve.
             </p>
           </div>
 
-          {/* Activate toggle */}
-          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+          <label htmlFor="bundle-activate" style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
             <input
+              id="bundle-activate"
               type="checkbox"
-              checked={activate}
-              onChange={(e) => setActivate(e.target.checked)}
+              checked={form.activate}
+              onChange={(e) => setField("activate", e.target.checked)}
             />
             <span style={{ fontSize: "0.9rem" }}>Make active immediately</span>
           </label>
           <p className="text-muted" style={{ fontSize: "0.8rem", marginTop: "-0.75rem" }}>
-            {activate ? "Bundle will be visible to organisations right away." : "Bundle will be saved as a draft. You can activate it later."}
+            {form.activate ? "Bundle will be visible to organisations right away." : "Bundle will be saved as a draft. You can activate it later."}
           </p>
 
-          {/* Submit */}
           <button
             type="submit"
             className="btn btn-primary"
             disabled={submitting}
             style={{ marginTop: "0.5rem" }}
           >
-            {submitting ? "Creating..." : activate ? "Post Bundle" : "Save as Draft"}
+            {submitting ? "Creating..." : form.activate ? "Post Bundle" : "Save as Draft"}
           </button>
         </form>
       )}
