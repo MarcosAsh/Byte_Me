@@ -38,6 +38,7 @@ export default function Footer() {
           <FooterLink href="/terms">Terms</FooterLink>
           <FooterLink href="/cookies">Cookies</FooterLink>
           <FooterLink href="/allergens">Allergens</FooterLink>
+          <FooterLink href="/accessibility">Accessibility</FooterLink>
         </FooterColumn>
       </div>
 
