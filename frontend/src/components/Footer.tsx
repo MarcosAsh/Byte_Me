@@ -37,6 +37,7 @@ export default function Footer() {
           <FooterLink href="/privacy">Privacy</FooterLink>
           <FooterLink href="/terms">Terms</FooterLink>
           <FooterLink href="/cookies">Cookies</FooterLink>
+          <FooterLink href="/allergens">Allergens</FooterLink>
         </FooterColumn>
       </div>
 
