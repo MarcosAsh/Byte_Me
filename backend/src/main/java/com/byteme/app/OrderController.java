@@ -44,6 +44,7 @@ public class OrderController {
 
     // Get orders by org
     @GetMapping("/org/{orgId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getByOrg(@PathVariable UUID orgId) {
         UUID userId = (UUID) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         var org = orgRepo.findById(orgId).orElse(null);
@@ -51,7 +52,22 @@ public class OrderController {
         if (!org.getUser().getUserId().equals(userId)) {
             return ResponseEntity.status(403).body("Access denied");
         }
-        return ResponseEntity.ok(reservationRepo.findByOrganisationOrgId(orgId));
+        return ResponseEntity.ok(reservationRepo.findByOrganisationOrgId(orgId).stream().map(r -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("reservationId", r.getReservationId());
+            map.put("postingTitle", r.getPosting().getTitle());
+            map.put("sellerName", r.getPosting().getSeller().getName());
+            map.put("sellerLocation", r.getPosting().getSeller().getLocationText());
+            map.put("priceCents", r.getPosting().getPriceCents());
+            map.put("pickupStartAt", r.getPosting().getPickupStartAt().toString());
+            map.put("pickupEndAt", r.getPosting().getPickupEndAt().toString());
+            map.put("status", r.getStatus().name());
+            map.put("reservedAt", r.getReservedAt().toString());
+            map.put("claimCodeLast4", r.getClaimCodeLast4());
+            if (r.getCollectedAt() != null) map.put("collectedAt", r.getCollectedAt().toString());
+            if (r.getCancelledAt() != null) map.put("cancelledAt", r.getCancelledAt().toString());
+            return map;
+        }).collect(Collectors.toList()));
     }
 
     // Get orders by seller (returns DTOs with posting title and org name)
