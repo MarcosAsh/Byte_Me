@@ -91,7 +91,7 @@ cd backend
 mvn spring-boot:run
 ```
 **The backend will start on: 
-http://localhost:8000**
+http://localhost:8080**
 
 
 ### 2) Start the frontend
