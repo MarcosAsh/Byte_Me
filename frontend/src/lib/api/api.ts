@@ -125,6 +125,21 @@ export const analyticsApi = {
     fetchApi(`/analytics/sell-through/${sellerId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  pricing: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/pricing/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  popularWindows: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/popular-windows/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  popularCategories: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/popular-categories/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 };
 
 // Gamification (for orgs)

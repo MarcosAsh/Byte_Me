@@ -141,6 +141,10 @@ export default function SellerDashboardPage() {
           <h3 style={{ fontWeight: 600, marginBottom: "0.25rem" }}>Create Bundle</h3>
           <p className="text-muted" style={{ fontSize: "0.9rem" }}>Post a new surplus food bundle for organisations</p>
         </Link>
+        <Link href="/insights" className="card" style={{ textDecoration: "none", color: "inherit" }}>
+          <h3 style={{ fontWeight: 600, marginBottom: "0.25rem" }}>Insights</h3>
+          <p className="text-muted" style={{ fontSize: "0.9rem" }}>Pricing effectiveness, pickup windows, and popular categories</p>
+        </Link>
         <Link href="/issues" className="card" style={{ textDecoration: "none", color: "inherit" }}>
           <h3 style={{ fontWeight: 600, marginBottom: "0.25rem" }}>Issues</h3>
           <p className="text-muted" style={{ fontSize: "0.9rem" }}>View and respond to reports from organisations</p>

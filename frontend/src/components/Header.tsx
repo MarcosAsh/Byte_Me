@@ -32,6 +32,7 @@ export default function Header() {
             <>
               <NavLink href="/dashboard">Dashboard</NavLink>
               <NavLink href="/analytics">Analytics</NavLink>
+              <NavLink href="/insights">Insights</NavLink>
               <NavLink href="/bundles">Bundles</NavLink>
               <NavLink href="/issues">Issues</NavLink>
             </>
@@ -91,6 +92,7 @@ export default function Header() {
             <>
               <NavLink href="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>
               <NavLink href="/analytics" onClick={() => setOpen(false)}>Analytics</NavLink>
+              <NavLink href="/insights" onClick={() => setOpen(false)}>Insights</NavLink>
               <NavLink href="/bundles" onClick={() => setOpen(false)}>Bundles</NavLink>
               <NavLink href="/issues" onClick={() => setOpen(false)}>Issues</NavLink>
             </>

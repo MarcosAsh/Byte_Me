@@ -148,6 +148,31 @@ export interface SellThroughResponse {
   cancelRate: number;
 }
 
+// Insights
+export interface PricingRow {
+  bracket: string;
+  bundleCount: number;
+  totalQuantity: number;
+  collectedCount: number;
+  sellThroughRate: number;
+}
+
+export interface WindowRow {
+  windowLabel: string;
+  totalReservations: number;
+  collectedCount: number;
+  noShowCount: number;
+  collectionRate: number;
+}
+
+export interface CategoryRow {
+  categoryName: string;
+  bundlesPosted: number;
+  totalQuantity: number;
+  collectedCount: number;
+  sellThroughRate: number;
+}
+
 // Forecasting
 export interface DemandObservationResponse {
   obsId: string;
