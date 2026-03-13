@@ -1,151 +1,202 @@
-# Byte Me — Local Setup & Run Guide
+<p align="center">
+  <img src="docs/logo.png" alt="Byte Me" width="400">
+</p>
 
-## Overview
+<p align="center">
+  A marketplace that connects food sellers with organisations to rescue surplus food, reduce waste, and track environmental impact.
+</p>
 
-Byte Me is a full-stack web application designed to reduce food waste by connecting sellers, organisations, and employees through surplus food bundle reservations.
-
-
-### Key Features:
-
-1. JWT-based authentication with role-based access (Seller / Employee)
-
-2. Bundle management (create / activate / close bundles)
-
-3. Reservation system with verification and no-show tracking
-
-4. Analytics dashboard for sellers (sell-through)
-
-5. Gamification (streaks / badges)
-
-6. Issue reporting
-
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-17-orange" alt="Java 17">
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.2-green" alt="Spring Boot 3.2">
+  <img src="https://img.shields.io/badge/Next.js-16-black" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/PostgreSQL-16-blue" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT License">
+</p>
 
 ---
-## Setup Instructions
 
-### 1) Clone the repository
+## What is Byte Me?
+
+Byte Me is a full-stack web application where food sellers list surplus bundles at discounted prices and charitable organisations reserve them for collection. The platform tracks environmental impact (meals rescued, CO2e saved), provides demand forecasting for sellers, and uses gamification (streaks, badges) to keep organisations engaged.
+
+### For Sellers
+- Create and manage surplus food bundles with pickup windows
+- View analytics dashboards: sell-through rates, pricing effectiveness, popular categories
+- Get demand forecasts with model comparison and quantity recommendations
+- Handle issue reports from organisations
+
+### For Organisations
+- Browse and reserve surplus bundles from local sellers
+- Collect orders using claim codes with pickup time reminders
+- Track impact stats: meals rescued, CO2e saved, streaks
+- Earn badges through consistent food rescue activity
+- Report quality or availability issues
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, Recharts, Zustand |
+| Backend | Java 17, Spring Boot 3.2, Spring Security, Spring Data JPA |
+| Database | PostgreSQL with Flyway migrations |
+| Auth | JWT tokens with role-based access (Seller / Org Admin) |
+| CI | GitHub Actions (backend tests + frontend build) |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Java 17
+- Maven
+- Node.js 20+
+- PostgreSQL
+
+### 1. Clone the repo
+
 ```bash
-git clone <repositoryURL>
+git clone https://github.com/MarcosAsh/Byte_Me.git
+cd Byte_Me
 ```
 
+### 2. Set up the database
 
-### 2) Prerequisites
-
-- **Git**
-- **Java 17**
-- **Maven**
-- **Node.js 20** 
-- **PostgreSQL**
-
-### 3) Install required tools (Optional)
-- **macOS using (setup-mac.sh)**
-  ```bash
-  cd scripts
-  chmod +x setup-mac.sh
-  ./setup-mac.sh
-  ```
-
-- **Windows using (setup-windows.ps1)**
-  ```powershell
-  (Run in PowerShell as Administrator)
-  cd scripts
-  .\setup-windows.ps1
-  ```
-
-
-### 4) Database setup
-
-#### Create the Database `byte_me`
-1) Start PostgreSQL
-2) Create the database:
 ```sql
 CREATE DATABASE byte_me;
 ```
 
+### 3. Configure environment variables
 
+Create `backend/.env` with:
 
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SERVER_PORT` | Backend server port | `8080` |
+| `DB_URL` | PostgreSQL JDBC URL | `jdbc:postgresql://localhost:5432/byte_me` |
+| `DB_USERNAME` | Database username | `postgres` |
+| `DB_PASSWORD` | Database password | `postgres` |
+| `JWT_SECRET` | Secret for signing JWTs (32+ bytes) | `change-me-to-a-random-string` |
+| `JWT_EXPIRATION` | Token expiry in milliseconds | `86400000` |
 
------
+### 4. Start the backend
 
-## Environment variables
-
-### Backend .env variable explanations
-|Variable	|Description|Example|
-|---|---|---|
-|SERVER_PORT|	Port the backend server runs on	|8080|
-|DB_URL	PostgreSQL| JDBC connection URL|	jdbc:postgresql://localhost:5432/byteMe|
-|DB_USERNAME	|PostgreSQL username	|postgres|
-|DB_PASSWORD	|PostgreSQL password	|postgres|
-|JWT_SECRET	|Secret key for signing JWT tokens (≥ 32 bytes)|change-me-to-a-random-string|
-|JWT_EXPIRATION|	JWT expiration time (ms)|	86400000|
-
-
----
-
-
-## Run locally
-
-### 1) Start the backend
 ```bash
 cd backend
 mvn spring-boot:run
 ```
-**The backend will start on: 
-http://localhost:8080**
 
+Runs on **http://localhost:8080**
 
-### 2) Start the frontend
+### 5. Start the frontend
+
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-**The frontend will start on: 
-http://localhost:3000**
+Runs on **http://localhost:3000**
+
+### Optional: automated setup scripts
+
+```bash
+# macOS
+cd scripts && chmod +x setup-mac.sh && ./setup-mac.sh
+
+# Windows (PowerShell as Administrator)
+cd scripts; .\setup-windows.ps1
+```
 
 ---
 
-## API Endpoints
+## Project Structure
+
+```
+Byte_Me/
+  backend/             Spring Boot API
+    src/main/java/     Controllers, entities, repositories, services
+    src/main/resources/ application.properties, Flyway migrations
+    src/test/java/     Unit tests (JUnit 5, Mockito, MockMvc)
+  frontend/            Next.js app
+    src/app/           Pages grouped by role: (public), (seller), (org)
+    src/components/    Shared UI components
+    src/lib/api/       API client and TypeScript types
+    src/store/         Zustand auth store
+  .github/workflows/   CI pipelines
+  scripts/             Setup scripts for macOS and Windows
+```
+
+---
+
+## API Overview
 
 ### Auth
-- `POST /api/auth/register` - Register
-- `POST /api/auth/login` - Login
-- `GET /api/auth/me` - Current user
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register a new seller or org |
+| POST | `/api/auth/login` | Log in |
+| GET | `/api/auth/me` | Get current user |
 
 ### Bundles
-- `GET /api/bundles` - List available
-- `GET /api/bundles/{id}` - Get one
-- `POST /api/bundles` - Create (seller)
-- `PUT /api/bundles/{id}` - Update (seller)
-- `POST /api/bundles/{id}/activate` - Activate
-- `POST /api/bundles/{id}/close` - Close
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/bundles` | List all active bundles |
+| GET | `/api/bundles/{id}` | Get bundle details |
+| POST | `/api/bundles` | Create a bundle (seller) |
+| PUT | `/api/bundles/{id}` | Update a bundle (seller) |
+| POST | `/api/bundles/{id}/activate` | Activate a draft bundle |
+| POST | `/api/bundles/{id}/close` | Close a bundle |
 
-### Reservations
-- `POST /api/reservations` - Reserve
-- `GET /api/reservations/org/{orgId}` - By org
-- `GET /api/reservations/employee/{employeeId}` - By employee
-- `POST /api/reservations/{id}/verify` - Verify claim code
-- `POST /api/reservations/{id}/no-show` - Mark no-show
-- `POST /api/reservations/{id}/cancel` - Cancel
-- `POST /api/reservations/{id}/assign/{employeeId}` - Assign employee
+### Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/orders` | Reserve a bundle (org) |
+| GET | `/api/orders/org/{orgId}` | Reservations by org |
+| GET | `/api/orders/seller/{sellerId}` | Orders for a seller |
+| POST | `/api/orders/{id}/collect` | Collect with claim code |
+| POST | `/api/orders/{id}/cancel` | Cancel a reservation |
 
 ### Analytics
-- `GET /api/analytics/dashboard/{sellerId}` - Dashboard
-- `GET /api/analytics/sell-through/{sellerId}` - Sell-through rates
-- `GET /api/analytics/waste/{sellerId}` - Waste metrics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/analytics/dashboard/{sellerId}` | Seller dashboard stats |
+| GET | `/api/analytics/sell-through/{sellerId}` | Sell-through rates |
+| GET | `/api/analytics/pricing/{sellerId}` | Pricing effectiveness |
+| GET | `/api/analytics/popular-windows/{sellerId}` | Best pickup windows |
+| GET | `/api/analytics/popular-categories/{sellerId}` | Top categories |
+
+### Forecasting
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/forecast/history/{sellerId}` | Historical demand data |
+| GET | `/api/forecast/{sellerId}` | Forecast predictions |
+| GET | `/api/forecast/comparison/{sellerId}` | Model comparison |
+| GET | `/api/forecast/recommendations/{sellerId}` | Quantity recommendations |
+| POST | `/api/forecast/run/{sellerId}` | Trigger a forecast run |
 
 ### Gamification
-- `GET /api/gamification/streak/{employeeId}` - Get streak
-- `GET /api/gamification/impact/{employeeId}` - Impact summary
-- `GET /api/gamification/badges/{employeeId}` - Employee badges
-- `GET /api/gamification/badges` - All badges
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/gamification/streak/{orgId}` | Org rescue streak |
+| GET | `/api/gamification/stats/{orgId}` | Impact stats |
+| GET | `/api/gamification/badges/{orgId}` | Org badges |
+| GET | `/api/gamification/badges` | All available badges |
 
 ### Issues
-- `GET /api/issues/seller/{sellerId}` - All issues
-- `GET /api/issues/seller/{sellerId}/open` - Open issues
-- `POST /api/issues` - Create issue
-- `POST /api/issues/{id}/respond` - Respond
-- `POST /api/issues/{id}/resolve` - Resolve
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/issues` | Report an issue (org) |
+| GET | `/api/issues/seller/{sellerId}` | Issues for a seller |
+| GET | `/api/issues/org/{orgId}` | Issues by org |
+| POST | `/api/issues/{id}/respond` | Seller responds |
+| POST | `/api/issues/{id}/resolve` | Resolve an issue |
 
-### Categories
-- `GET /api/categories` - List all
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
