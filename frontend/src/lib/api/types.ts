@@ -140,6 +140,14 @@ export interface DashboardResponse {
   openIssueCount: number;
 }
 
+export interface WasteAvoidedResponse {
+  wasteAvoidedGrams: number;
+  wasteAvoidedKg: number;
+  co2eAvoidedKg: number;
+  avgWeightPerBundleKg: number;
+  totalBundlesCollected: number;
+}
+
 export interface SellThroughResponse {
   collected: number;
   cancelled: number;

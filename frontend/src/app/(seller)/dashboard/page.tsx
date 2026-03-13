@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/store/auth.store";
 import { analyticsApi, ordersApi, issuesApi } from "@/lib/api/api";
-import type { DashboardResponse, IssueReport } from "@/lib/api/types";
+import type { DashboardResponse, IssueReport, WasteAvoidedResponse } from "@/lib/api/types";
 
 interface SellerOrder {
   reservationId: string;
@@ -19,6 +19,7 @@ interface SellerOrder {
 export default function SellerDashboardPage() {
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [waste, setWaste] = useState<WasteAvoidedResponse | null>(null);
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [issues, setIssues] = useState<IssueReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,14 +33,16 @@ export default function SellerDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [d, o, i] = await Promise.all([
+      const [d, o, i, w] = await Promise.all([
         analyticsApi.dashboard(sellerId, token),
         ordersApi.bySeller(sellerId, token),
         issuesApi.openBySeller(sellerId, token),
+        analyticsApi.wasteAvoided(sellerId, token),
       ]);
       setDashboard(d);
       setOrders(o);
       setIssues(i);
+      setWaste(w);
     } catch {
       setError("Failed to load dashboard data.");
     } finally {
@@ -128,6 +131,31 @@ export default function SellerDashboardPage() {
             value={dashboard.openIssueCount}
             color={dashboard.openIssueCount > 0 ? "var(--error-dark)" : "var(--success-dark)"}
           />
+        </div>
+      )}
+
+      {/* Waste avoided */}
+      {waste && waste.totalBundlesCollected > 0 && (
+        <div className="card mb-6" style={{ padding: "1.5rem", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "#166534" }}>Waste Avoided</h2>
+          <div className="grid grid-3" style={{ gap: "1rem" }}>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "1.75rem", fontWeight: 700, color: "#166534" }}>{waste.wasteAvoidedKg} kg</p>
+              <p className="text-muted" style={{ fontSize: "0.85rem" }}>Food Waste Avoided</p>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "1.75rem", fontWeight: 700, color: "#166534" }}>{waste.co2eAvoidedKg} kg</p>
+              <p className="text-muted" style={{ fontSize: "0.85rem" }}>CO2e Avoided</p>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "1.75rem", fontWeight: 700, color: "#166534" }}>{waste.avgWeightPerBundleKg} kg</p>
+              <p className="text-muted" style={{ fontSize: "0.85rem" }}>Avg Bundle Weight</p>
+            </div>
+          </div>
+          <p className="text-muted" style={{ fontSize: "0.75rem", marginTop: "0.75rem" }}>
+            Based on {waste.totalBundlesCollected} collected bundles. Default 1.5 kg assumed where weight not specified.
+            CO2e estimate uses 2.5 kg CO2e per kg food waste (WRAP UK).
+          </p>
         </div>
       )}
 

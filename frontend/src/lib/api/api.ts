@@ -140,6 +140,11 @@ export const analyticsApi = {
     fetchApi(`/analytics/popular-categories/${sellerId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  wasteAvoided: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/waste-avoided/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 };
 
 // Gamification (for orgs)

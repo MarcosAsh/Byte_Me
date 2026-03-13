@@ -267,6 +267,67 @@ public class AnalyticsController {
         return ResponseEntity.ok(rows);
     }
 
+    // Waste avoided endpoint
+    // Assumptions: default 1500g per bundle if weight not set (based on OLIO/TGTG averages),
+    // 2.5 kg CO2e per kg food waste avoided (WRAP UK data)
+    @GetMapping("/waste-avoided/{sellerId}")
+    public ResponseEntity<?> getWasteAvoided(@PathVariable UUID sellerId) {
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+
+        UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!seller.getUser().getUserId().equals(userId)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+
+        var reservations = reservationRepo.findByPostingSellerSellerId(sellerId);
+        var collected = reservations.stream()
+                .filter(r -> r.getStatus() == Reservation.Status.COLLECTED)
+                .toList();
+
+        int totalBundlesCollected = collected.size();
+        long totalWeightGrams = 0;
+        for (var r : collected) {
+            Integer weight = r.getPosting().getEstimatedWeightGrams();
+            totalWeightGrams += (weight != null && weight > 0) ? weight : 1500;
+        }
+
+        double wasteAvoidedKg = totalWeightGrams / 1000.0;
+        double co2eAvoidedKg = wasteAvoidedKg * 2.5;
+        double avgWeightPerBundle = totalBundlesCollected > 0
+                ? (double) totalWeightGrams / totalBundlesCollected / 1000.0 : 0;
+
+        return ResponseEntity.ok(new WasteAvoidedResponse(
+                totalWeightGrams, Math.round(wasteAvoidedKg * 10) / 10.0,
+                Math.round(co2eAvoidedKg * 10) / 10.0,
+                Math.round(avgWeightPerBundle * 10) / 10.0,
+                totalBundlesCollected));
+    }
+
+    // Waste avoided DTO
+    public static class WasteAvoidedResponse {
+        private long wasteAvoidedGrams;
+        private double wasteAvoidedKg;
+        private double co2eAvoidedKg;
+        private double avgWeightPerBundleKg;
+        private int totalBundlesCollected;
+
+        public WasteAvoidedResponse(long wasteAvoidedGrams, double wasteAvoidedKg, double co2eAvoidedKg,
+                                     double avgWeightPerBundleKg, int totalBundlesCollected) {
+            this.wasteAvoidedGrams = wasteAvoidedGrams;
+            this.wasteAvoidedKg = wasteAvoidedKg;
+            this.co2eAvoidedKg = co2eAvoidedKg;
+            this.avgWeightPerBundleKg = avgWeightPerBundleKg;
+            this.totalBundlesCollected = totalBundlesCollected;
+        }
+
+        public long getWasteAvoidedGrams() { return wasteAvoidedGrams; }
+        public double getWasteAvoidedKg() { return wasteAvoidedKg; }
+        public double getCo2eAvoidedKg() { return co2eAvoidedKg; }
+        public double getAvgWeightPerBundleKg() { return avgWeightPerBundleKg; }
+        public int getTotalBundlesCollected() { return totalBundlesCollected; }
+    }
+
     // Pricing effectiveness DTO
     public static class PricingRow {
         private String bracket;
