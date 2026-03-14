@@ -485,3 +485,235 @@ INSERT INTO seller_metrics_weekly (
   ('80000000-0000-0000-0000-000000000002', date_trunc('week', now())::date - 14, 3, 30, 24, 4, 2, 0.80, 21000),
   ('80000000-0000-0000-0000-000000000002', date_trunc('week', now())::date - 7,  3, 33, 27, 3, 3, 0.82, 22500)
 ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- 9) BULK SEED DATA (rubric minimums)
+--
+-- Targets: 25 sellers, 250 bundles, 400 reservations
+--          (80 no-shows, 50 expiries), 150 issue reports,
+--          6 categories, 10 pickup windows
+-- ============================================================
+
+-- 9A) Extra categories (4 existing + 2 new = 6)
+INSERT INTO category (category_id, name) VALUES
+  ('55555555-5555-5555-5555-555555555555', 'Sandwiches'),
+  ('66666666-6666-6666-6666-666666666666', 'Drinks')
+ON CONFLICT (name) DO NOTHING;
+
+-- 9B) Extra pickup windows (4 existing + 6 new = 10)
+INSERT INTO pickup_window (window_id, label, start_time, end_time) VALUES
+  ('aaaaaaa5-aaaa-aaaa-aaaa-aaaaaaaaaaa5', '09:00-11:00', '09:00', '11:00'),
+  ('aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6', '14:00-16:00', '14:00', '16:00'),
+  ('aaaaaaa7-aaaa-aaaa-aaaa-aaaaaaaaaaa7', '16:00-17:00', '16:00', '17:00'),
+  ('aaaaaaa8-aaaa-aaaa-aaaa-aaaaaaaaaaa8', '19:30-21:00', '19:30', '21:00'),
+  ('aaaaaaa9-aaaa-aaaa-aaaa-aaaaaaaaaaa9', '08:00-10:00', '08:00', '10:00'),
+  ('aaaaaa10-aaaa-aaaa-aaaa-aaaaaaaaaaa0', '11:00-12:30', '11:00', '12:30')
+ON CONFLICT (label) DO NOTHING;
+
+-- 9C) Bulk sellers (23 new, total 25) and orgs (6 new, total 8)
+DO $$
+DECLARE
+  seller_names TEXT[] := ARRAY[
+    'Green Bakery','The Deli Counter','Fresh & Fast','Sunrise Cafe','Noodle House',
+    'Pizza Corner','The Salad Bar','Daily Bread','Ocean Catch','Curry Kitchen',
+    'Wrap It Up','The Juice Bar','Pasta Palace','Burger Barn','Sweet Treats',
+    'Grain Store','The Pantry','Spice Route','Farm Table','City Grill',
+    'Bean Counter','The Flour Mill','Harvest Kitchen'
+  ];
+  seller_locations TEXT[] := ARRAY[
+    'Exeter High St','Sidwell St','Queen St','Fore St','South St',
+    'Paris St','Cathedral Yard','Gandy St','Magdalen Rd','Topsham Rd',
+    'Heavitree Rd','Pinhoe Rd','Cowley Bridge Rd','Bonhay Rd','Cowick St',
+    'Alphington Rd','Pennsylvania Rd','Blackboy Rd','Wonford Rd','Countess Wear',
+    'St Thomas','Marsh Barton','Exwick'
+  ];
+  org_names TEXT[] := ARRAY[
+    'Exeter Food Bank','Hope Centre','City Mission','Warm Welcome Hub',
+    'Student Aid Exeter','Neighbourhood Kitchen'
+  ];
+  v_user_id UUID;
+  v_seller_id UUID;
+  v_org_id UUID;
+BEGIN
+  FOR i IN 1..23 LOOP
+    v_user_id := gen_random_uuid();
+    v_seller_id := gen_random_uuid();
+
+    INSERT INTO user_account (user_id, email, password_hash, role)
+    VALUES (v_user_id, 'seller' || (i + 2) || '@byteme.test',
+            '$2a$10$sPWYMTdumdKYGt9uNpSY3OD3pmHGfYRH7s/2RTUvCIpwLiOLR9jZm', 'SELLER')
+    ON CONFLICT (email) DO NOTHING;
+
+    IF FOUND THEN
+      INSERT INTO seller (seller_id, user_id, name, location_text, contact_stub)
+      VALUES (v_seller_id, v_user_id, seller_names[i], seller_locations[i],
+              lower(replace(seller_names[i], ' ', '')) || '@test.com')
+      ON CONFLICT (seller_id) DO NOTHING;
+    END IF;
+  END LOOP;
+
+  FOR i IN 1..6 LOOP
+    v_user_id := gen_random_uuid();
+    v_org_id := gen_random_uuid();
+
+    INSERT INTO user_account (user_id, email, password_hash, role)
+    VALUES (v_user_id, 'org' || (i + 2) || '@byteme.test',
+            '$2a$10$sPWYMTdumdKYGt9uNpSY3OD3pmHGfYRH7s/2RTUvCIpwLiOLR9jZm', 'ORG_ADMIN')
+    ON CONFLICT (email) DO NOTHING;
+
+    IF FOUND THEN
+      INSERT INTO organisation (org_id, user_id, name, location_text, billing_email)
+      VALUES (v_org_id, v_user_id, org_names[i], 'Exeter',
+              lower(replace(org_names[i], ' ', '')) || '@test.com')
+      ON CONFLICT (org_id) DO NOTHING;
+    END IF;
+  END LOOP;
+END $$;
+
+-- 9D) Bulk bundle postings, reservations, and issue reports
+-- Disable triggers for bulk historical data
+ALTER TABLE reservation DISABLE TRIGGER reservation_capacity_on_insert;
+ALTER TABLE reservation DISABLE TRIGGER reservation_capacity_on_update;
+ALTER TABLE rescue_event DISABLE TRIGGER rescue_event_requires_collected;
+
+DO $$
+DECLARE
+  v_sellers UUID[];
+  v_categories UUID[];
+  v_windows UUID[];
+  v_orgs UUID[];
+  v_posting_id UUID;
+  v_reservation_id UUID;
+  v_titles TEXT[] := ARRAY[
+    'Surplus Bundle','Mixed Bag','End of Day Pack','Rescue Box','Lucky Dip',
+    'Fresh Pick','Clearance Pack','Daily Special','Value Bundle','Last Chance Box',
+    'Surprise Bag','Bargain Box','Quick Sale Pack','Evening Bundle','Leftover Lot'
+  ];
+  v_allergens TEXT[] := ARRAY[
+    'gluten, dairy','nuts','gluten','dairy, eggs','none listed',
+    'may contain nuts','gluten, soy','dairy','eggs, gluten','shellfish',
+    '','gluten, dairy, eggs','nuts, soy','dairy','gluten'
+  ];
+  v_descriptions TEXT[] := ARRAY[
+    'A mix of items from today. Great value!',
+    'Assorted items nearing best-before date.',
+    'Fresh produce that needs to go today.',
+    'A selection of our finest leftovers.',
+    'What we have left from the day. Always a surprise!'
+  ];
+  v_posting_ids UUID[] := ARRAY[]::UUID[];
+  v_count INT;
+  v_status TEXT;
+BEGIN
+  SELECT array_agg(seller_id) INTO v_sellers FROM seller;
+  SELECT array_agg(category_id) INTO v_categories FROM category;
+  SELECT array_agg(window_id) INTO v_windows FROM pickup_window;
+  SELECT array_agg(org_id) INTO v_orgs FROM organisation;
+
+  -- Generate 10 postings per seller (~250 total)
+  FOR i IN 1..array_length(v_sellers, 1) LOOP
+    FOR j IN 1..10 LOOP
+      v_posting_id := gen_random_uuid();
+
+      INSERT INTO bundle_posting (
+        posting_id, seller_id, category_id, window_id,
+        title, description, allergens_text,
+        pickup_start_at, pickup_end_at,
+        quantity_total, quantity_reserved,
+        price_cents, discount_pct, estimated_weight_grams,
+        status, created_at
+      ) VALUES (
+        v_posting_id,
+        v_sellers[i],
+        v_categories[1 + ((i + j) % array_length(v_categories, 1))],
+        v_windows[1 + ((i + j + 3) % array_length(v_windows, 1))],
+        v_titles[1 + (j % array_length(v_titles, 1))],
+        v_descriptions[1 + (j % array_length(v_descriptions, 1))],
+        v_allergens[1 + ((i + j) % array_length(v_allergens, 1))],
+        now() + ((j - 5) * 7 || ' days')::interval + time '12:00',
+        now() + ((j - 5) * 7 || ' days')::interval + time '14:00',
+        10 + (i * j % 20), 0,
+        200 + (j * 50), 10 + (j * 5 % 50),
+        1000 + (j * 500),
+        CASE WHEN j <= 8 THEN 'ACTIVE' WHEN j = 9 THEN 'CLOSED' ELSE 'DRAFT' END,
+        now() - ((12 - j) || ' days')::interval
+      ) ON CONFLICT (posting_id) DO NOTHING;
+
+      v_posting_ids := array_append(v_posting_ids, v_posting_id);
+    END LOOP;
+  END LOOP;
+
+  -- Generate 400 reservations: 200 COLLECTED, 80 NO_SHOW, 50 EXPIRED, 50 CANCELLED, 20 RESERVED
+  FOR i IN 1..400 LOOP
+    v_reservation_id := gen_random_uuid();
+
+    IF i <= 200 THEN v_status := 'COLLECTED';
+    ELSIF i <= 280 THEN v_status := 'NO_SHOW';
+    ELSIF i <= 330 THEN v_status := 'EXPIRED';
+    ELSIF i <= 380 THEN v_status := 'CANCELLED';
+    ELSE v_status := 'RESERVED';
+    END IF;
+
+    INSERT INTO reservation (
+      reservation_id, posting_id, org_id,
+      status, claim_code_hash, claim_code_last4,
+      reserved_at, collected_at, no_show_marked_at, expired_marked_at, cancelled_at
+    ) VALUES (
+      v_reservation_id,
+      v_posting_ids[1 + (i % array_length(v_posting_ids, 1))],
+      v_orgs[1 + (i % array_length(v_orgs, 1))],
+      v_status,
+      crypt('SEED-' || i, gen_salt('bf')),
+      lpad((i % 10000)::text, 4, '0'),
+      now() - ((400 - i) || ' hours')::interval,
+      CASE WHEN v_status = 'COLLECTED' THEN now() - ((399 - i) || ' hours')::interval END,
+      CASE WHEN v_status = 'NO_SHOW' THEN now() - ((399 - i) || ' hours')::interval END,
+      CASE WHEN v_status = 'EXPIRED' THEN now() - ((399 - i) || ' hours')::interval END,
+      CASE WHEN v_status = 'CANCELLED' THEN now() - ((399 - i) || ' hours')::interval END
+    ) ON CONFLICT (reservation_id) DO NOTHING;
+
+    IF v_status = 'COLLECTED' THEN
+      INSERT INTO rescue_event (event_id, org_id, reservation_id, collected_at, meals_estimate, co2e_estimate_grams)
+      VALUES (gen_random_uuid(), v_orgs[1 + (i % array_length(v_orgs, 1))], v_reservation_id,
+              now() - ((399 - i) || ' hours')::interval, 3 + (i % 10), 1200 + (i % 5) * 400)
+      ON CONFLICT DO NOTHING;
+    END IF;
+  END LOOP;
+
+  -- Generate 150 issue reports: 50 OPEN, 50 RESPONDED, 50 RESOLVED
+  FOR i IN 1..150 LOOP
+    INSERT INTO issue_report (
+      issue_id, org_id,
+      type, description, status,
+      seller_response,
+      created_at, resolved_at
+    ) VALUES (
+      gen_random_uuid(),
+      v_orgs[1 + (i % array_length(v_orgs, 1))],
+      CASE (i % 3) WHEN 0 THEN 'QUALITY' WHEN 1 THEN 'UNAVAILABLE' ELSE 'OTHER' END,
+      CASE (i % 5)
+        WHEN 0 THEN 'Items were past their best-before date.'
+        WHEN 1 THEN 'Bundle was not available at the listed pickup time.'
+        WHEN 2 THEN 'Quantity was less than advertised.'
+        WHEN 3 THEN 'Allergen information was incorrect.'
+        ELSE 'Other issue with the order.'
+      END,
+      CASE WHEN i <= 50 THEN 'OPEN' WHEN i <= 100 THEN 'RESPONDED' ELSE 'RESOLVED' END,
+      CASE WHEN i > 50 THEN 'We apologise for the inconvenience and are looking into this.' END,
+      now() - ((150 - i) || ' days')::interval,
+      CASE WHEN i > 100 THEN now() - ((147 - i) || ' days')::interval END
+    ) ON CONFLICT DO NOTHING;
+  END LOOP;
+
+  -- Fix quantity_reserved to match actual RESERVED count
+  UPDATE bundle_posting bp
+  SET quantity_reserved = (
+    SELECT COUNT(*) FROM reservation r
+    WHERE r.posting_id = bp.posting_id AND r.status = 'RESERVED'
+  );
+END $$;
+
+-- Re-enable triggers
+ALTER TABLE reservation ENABLE TRIGGER reservation_capacity_on_insert;
+ALTER TABLE reservation ENABLE TRIGGER reservation_capacity_on_update;
+ALTER TABLE rescue_event ENABLE TRIGGER rescue_event_requires_collected;
