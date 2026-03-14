@@ -117,6 +117,25 @@ export default function OrgGamificationPage() {
         </div>
       </div>
 
+      {/* Impact summary */}
+      {stats && (
+        <div className="card mb-6" style={{ padding: "1.5rem", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "#166534" }}>Your Impact</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(10rem, 1fr))", gap: "1rem" }}>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "2rem", fontWeight: 700, color: "#166534" }}>{stats.mealsRescued ?? 0}</p>
+              <p className="text-muted" style={{ fontSize: "0.85rem" }}>Meals Rescued</p>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "2rem", fontWeight: 700, color: "#166534" }}>
+                {((stats.co2eSavedGrams ?? 0) / 1000).toFixed(1)} kg
+              </p>
+              <p className="text-muted" style={{ fontSize: "0.85rem" }}>CO2e Saved</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       {stats && (
         <div className="grid grid-3 mb-6" style={{ gap: "1rem" }}>

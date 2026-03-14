@@ -126,6 +126,8 @@ export interface StatsResponse {
   currentStreakWeeks: number;
   bestStreakWeeks: number;
   badgesEarned: number;
+  mealsRescued: number;
+  co2eSavedGrams: number;
 }
 
 // Analytics
