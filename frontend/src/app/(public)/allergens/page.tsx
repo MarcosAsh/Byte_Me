@@ -8,7 +8,7 @@ export default function LicensePage() {
         Updated 15/02/26 in line with Natasha's Law(2021) and the Food Information Regulations Act(2014)
       </p>
 
-      <div className="border rounded-lg shadow-inner h-[70vh] overflow-y-scroll p-6 bg-white">
+      <div className="border rounded-lg shadow-inner h-[70vh] overflow-y-scroll p-6 bg-white text-gray-900">
         <div className="prose prose-lg max-w-none space-y-4">
           <h2 className="text-1xl font-bold mb-4">Byte Me allergens notice</h2>
           <p>

@@ -486,21 +486,13 @@ INSERT INTO seller_metrics_weekly (
   ('80000000-0000-0000-0000-000000000002', date_trunc('week', now())::date - 7,  3, 33, 27, 3, 3, 0.82, 22500)
 ON CONFLICT DO NOTHING;
 
--- ============================================================
--- 9) BULK SEED DATA (rubric minimums)
---
--- Targets: 25 sellers, 250 bundles, 400 reservations
---          (80 no-shows, 50 expiries), 150 issue reports,
---          6 categories, 10 pickup windows
--- ============================================================
-
--- 9A) Extra categories (4 existing + 2 new = 6)
+-- Bulk data to fill out the platform with realistic volume
 INSERT INTO category (category_id, name) VALUES
   ('55555555-5555-5555-5555-555555555555', 'Sandwiches'),
   ('66666666-6666-6666-6666-666666666666', 'Drinks')
 ON CONFLICT (name) DO NOTHING;
 
--- 9B) Extra pickup windows (4 existing + 6 new = 10)
+-- More pickup windows
 INSERT INTO pickup_window (window_id, label, start_time, end_time) VALUES
   ('aaaaaaa5-aaaa-aaaa-aaaa-aaaaaaaaaaa5', '09:00-11:00', '09:00', '11:00'),
   ('aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6', '14:00-16:00', '14:00', '16:00'),
@@ -510,7 +502,7 @@ INSERT INTO pickup_window (window_id, label, start_time, end_time) VALUES
   ('aaaaaa10-aaaa-aaaa-aaaa-aaaaaaaaaaa0', '11:00-12:30', '11:00', '12:30')
 ON CONFLICT (label) DO NOTHING;
 
--- 9C) Bulk sellers (23 new, total 25) and orgs (6 new, total 8)
+-- Extra sellers and orgs
 DO $$
 DECLARE
   seller_names TEXT[] := ARRAY[
@@ -570,8 +562,7 @@ BEGIN
   END LOOP;
 END $$;
 
--- 9D) Bulk bundle postings, reservations, and issue reports
--- Disable triggers for bulk historical data
+-- Disable triggers so we can insert historical data without capacity checks
 ALTER TABLE reservation DISABLE TRIGGER reservation_capacity_on_insert;
 ALTER TABLE reservation DISABLE TRIGGER reservation_capacity_on_update;
 ALTER TABLE rescue_event DISABLE TRIGGER rescue_event_requires_collected;
@@ -610,7 +601,7 @@ BEGIN
   SELECT array_agg(window_id) INTO v_windows FROM pickup_window;
   SELECT array_agg(org_id) INTO v_orgs FROM organisation;
 
-  -- Generate 10 postings per seller (~250 total)
+  -- 10 postings per seller
   FOR i IN 1..array_length(v_sellers, 1) LOOP
     FOR j IN 1..10 LOOP
       v_posting_id := gen_random_uuid();
@@ -643,7 +634,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- Generate 400 reservations: 200 COLLECTED, 80 NO_SHOW, 50 EXPIRED, 50 CANCELLED, 20 RESERVED
+  -- Reservations with a mix of statuses
   FOR i IN 1..400 LOOP
     v_reservation_id := gen_random_uuid();
 
@@ -680,7 +671,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Generate 150 issue reports: 50 OPEN, 50 RESPONDED, 50 RESOLVED
+  -- Issue reports
   FOR i IN 1..150 LOOP
     INSERT INTO issue_report (
       issue_id, org_id,
@@ -705,7 +696,7 @@ BEGIN
     ) ON CONFLICT DO NOTHING;
   END LOOP;
 
-  -- Fix quantity_reserved to match actual RESERVED count
+  -- Sync quantity_reserved with what we just inserted
   UPDATE bundle_posting bp
   SET quantity_reserved = (
     SELECT COUNT(*) FROM reservation r
@@ -713,7 +704,7 @@ BEGIN
   );
 END $$;
 
--- Re-enable triggers
+-- Put triggers back
 ALTER TABLE reservation ENABLE TRIGGER reservation_capacity_on_insert;
 ALTER TABLE reservation ENABLE TRIGGER reservation_capacity_on_update;
 ALTER TABLE rescue_event ENABLE TRIGGER rescue_event_requires_collected;
