@@ -7,6 +7,7 @@ import type { BundlePosting } from "@/lib/api/types";
 
 export default function BundlesPage() {
   const [search, setSearch] = useState("");
+  const [location, setLocation] = useState("");
   const [category, setCategory] = useState("All");
   const [bundles, setBundles] = useState<BundlePosting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +28,9 @@ export default function BundlesPage() {
     const seller = (b.seller?.name || "").toLowerCase();
     const matchSearch = title.includes(search.toLowerCase()) || seller.includes(search.toLowerCase());
     const cat = b.category?.name || "";
-    return matchSearch && (category === "All" || cat === category);
+    const loc = (b.seller?.locationText || "").toLowerCase();
+    const matchLocation = !location || loc.includes(location.toLowerCase());
+    return matchSearch && matchLocation && (category === "All" || cat === category);
   });
 
   const categoryNames = ["All", ...Array.from(new Set(bundles.map((b) => b.category?.name).filter((n): n is string => !!n)))];
@@ -58,7 +61,10 @@ export default function BundlesPage() {
         <p className="page-subtitle">Save food from going to waste and get great deals</p>
       </div>
 
-      <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="input" placeholder="Search bundles..." />
+      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="input" placeholder="Search bundles..." style={{ flex: 2, minWidth: "200px" }} aria-label="Search bundles" />
+        <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="input" placeholder="Filter by location..." style={{ flex: 1, minWidth: "150px" }} aria-label="Filter by location" />
+      </div>
 
       <div className="filters mt-4">
         {categoryNames.map((c) => (
@@ -75,7 +81,10 @@ export default function BundlesPage() {
               <div className="bundle-image" />
               <div className="bundle-content">
                 <div className="bundle-title">{b.title}</div>
-                <div className="bundle-seller">{b.seller?.name}</div>
+                <div className="bundle-seller">
+                  {b.seller?.name}
+                  {b.seller?.locationText && <span style={{ marginLeft: "0.25rem" }}>{"\u2022"} {b.seller.locationText}</span>}
+                </div>
                 <div className="bundle-badges">
                   <span className="badge badge-primary">{available} available</span>
                   {b.discountPct > 0 && <span className="badge badge-warning">{b.discountPct}% off</span>}
