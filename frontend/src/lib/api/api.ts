@@ -189,7 +189,7 @@ export const issuesApi = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  create: (data: { orderId?: string; orgId: string; type: 'UNAVAILABLE' | 'QUALITY' | 'OTHER'; description: string }, token: string) =>
+  create: (data: { reservationId?: string; orgId: string; type: 'UNAVAILABLE' | 'QUALITY' | 'OTHER'; description: string }, token: string) =>
     fetchApi('/issues', {
       method: 'POST',
       body: JSON.stringify(data),

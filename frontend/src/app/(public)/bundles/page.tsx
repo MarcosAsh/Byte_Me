@@ -102,7 +102,13 @@ export default function BundlesPage() {
         })}
       </div>
 
-      {filtered.length === 0 && <div className="empty-state">No bundles found matching your search.</div>}
+      {filtered.length === 0 && (
+        <div className="empty-state">
+          {bundles.length === 0
+            ? "No bundles are currently available. Check back soon!"
+            : "No bundles found matching your search."}
+        </div>
+      )}
     </div>
   );
 }

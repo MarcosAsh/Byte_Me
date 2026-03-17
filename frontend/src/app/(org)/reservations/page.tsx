@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/store/auth.store";
-import { ordersApi } from "@/lib/api/api";
+import { ordersApi, issuesApi } from "@/lib/api/api";
 import FoodSafetyDisclaimer from "@/components/FoodSafetyDisclaimer";
 
 interface OrgReservation {
@@ -152,7 +152,7 @@ export default function OrgReservationsPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {filtered.map((r) => (
-            <ReservationCard key={r.reservationId} reservation={r} onCancel={handleCancel} />
+            <ReservationCard key={r.reservationId} reservation={r} onCancel={handleCancel} orgId={orgId} token={token} />
           ))}
         </div>
       )}
@@ -163,6 +163,8 @@ export default function OrgReservationsPage() {
 function ReservationCard({
   reservation: r,
   onCancel,
+  orgId,
+  token,
 }: {
   reservation: {
     reservationId: string;
@@ -179,10 +181,34 @@ function ReservationCard({
     cancelledAt?: string;
   };
   onCancel: (id: string) => void;
+  orgId?: string;
+  token?: string;
 }) {
+  const [showReport, setShowReport] = useState(false);
+  const [issueType, setIssueType] = useState<"UNAVAILABLE" | "QUALITY" | "OTHER">("QUALITY");
+  const [issueDesc, setIssueDesc] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [reported, setReported] = useState(false);
+
   const pickupStart = new Date(r.pickupStartAt);
   const pickupEnd = new Date(r.pickupEndAt);
   const isUpcoming = r.status === "RESERVED" && pickupEnd > new Date();
+  const canReport = (r.status === "COLLECTED" || r.status === "RESERVED") && !reported;
+
+  async function handleReport() {
+    if (!orgId || !token || !issueDesc.trim()) return;
+    setSubmitting(true);
+    try {
+      await issuesApi.create({ reservationId: r.reservationId, orgId, type: issueType, description: issueDesc }, token);
+      setReported(true);
+      setShowReport(false);
+      setIssueDesc("");
+    } catch {
+      // silently fail
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div
@@ -258,13 +284,60 @@ function ReservationCard({
               {r.claimCodeLast4 || "****"}
             </span>
           </div>
-          <button
-            className="btn btn-secondary"
-            style={{ fontSize: "0.8rem", padding: "4px 12px" }}
-            onClick={() => onCancel(r.reservationId)}
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: "0.8rem", padding: "4px 12px" }}
+              onClick={() => onCancel(r.reservationId)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report issue */}
+      {canReport && !showReport && (
+        <button
+          className="btn btn-secondary"
+          style={{ fontSize: "0.8rem", padding: "4px 12px", alignSelf: "flex-start" }}
+          onClick={() => setShowReport(true)}
+        >
+          Report Issue
+        </button>
+      )}
+      {reported && (
+        <p style={{ fontSize: "0.85rem", color: "var(--success-dark)" }}>Issue reported.</p>
+      )}
+      {showReport && (
+        <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <select
+            value={issueType}
+            onChange={(e) => setIssueType(e.target.value as "UNAVAILABLE" | "QUALITY" | "OTHER")}
+            className="input"
+            style={{ maxWidth: "200px" }}
+            aria-label="Issue type"
           >
-            Cancel Reservation
-          </button>
+            <option value="QUALITY">Quality issue</option>
+            <option value="UNAVAILABLE">Bundle unavailable</option>
+            <option value="OTHER">Other</option>
+          </select>
+          <textarea
+            value={issueDesc}
+            onChange={(e) => setIssueDesc(e.target.value)}
+            placeholder="Describe the issue..."
+            className="input"
+            rows={2}
+            aria-label="Issue description"
+          />
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "4px 12px" }} onClick={handleReport} disabled={submitting || !issueDesc.trim()}>
+              {submitting ? "Sending..." : "Submit"}
+            </button>
+            <button className="btn btn-secondary" style={{ fontSize: "0.8rem", padding: "4px 12px" }} onClick={() => setShowReport(false)}>
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>
