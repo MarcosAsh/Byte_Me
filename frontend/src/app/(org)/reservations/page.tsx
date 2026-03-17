@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/store/auth.store";
 import { ordersApi } from "@/lib/api/api";
+import FoodSafetyDisclaimer from "@/components/FoodSafetyDisclaimer";
 
 interface OrgReservation {
   reservationId: string;
@@ -103,6 +104,13 @@ export default function OrgReservationsPage() {
       </div>
 
       {error && <div className="alert alert-error mb-4" role="alert">{error}</div>}
+
+      <div className="mb-4">
+        <FoodSafetyDisclaimer />
+      </div>
+
+      {/* Pickup reminders */}
+      <PickupReminders reservations={reservations} />
 
       {/* Filter tabs */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
@@ -259,6 +267,49 @@ function ReservationCard({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function PickupReminders({ reservations }: { reservations: OrgReservation[] }) {
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const upcoming = reservations.filter((r) => {
+    if (r.status !== "RESERVED") return false;
+    const start = new Date(r.pickupStartAt);
+    const end = new Date(r.pickupEndAt);
+    return end > now && start < in24h;
+  });
+
+  if (upcoming.length === 0) return null;
+
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div
+      style={{
+        padding: "0.75rem 1rem",
+        borderRadius: "0.5rem",
+        border: "1px solid #93c5fd",
+        backgroundColor: "#eff6ff",
+        marginBottom: "1rem",
+        color: "#1e40af",
+      }}
+    >
+      <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+        Upcoming Pickups
+      </p>
+      {upcoming.map((r) => (
+        <p key={r.reservationId} style={{ fontSize: "0.85rem", marginBottom: "0.25rem" }}>
+          <strong>{r.postingTitle}</strong> at {r.sellerName} between{" "}
+          {formatTime(r.pickupStartAt)} and {formatTime(r.pickupEndAt)}.
+          {r.claimCodeLast4 && (
+            <> Claim code ends in <strong style={{ fontFamily: "monospace" }}>{r.claimCodeLast4}</strong>.</>
+          )}
+        </p>
+      ))}
     </div>
   );
 }

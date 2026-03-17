@@ -122,10 +122,12 @@ export interface StreakResponse {
 }
 
 export interface StatsResponse {
-  totalOrders: number;
+  totalReservations: number;
   currentStreakWeeks: number;
   bestStreakWeeks: number;
   badgesEarned: number;
+  mealsRescued: number;
+  co2eSavedGrams: number;
 }
 
 // Analytics
@@ -140,12 +142,45 @@ export interface DashboardResponse {
   openIssueCount: number;
 }
 
+export interface WasteAvoidedResponse {
+  wasteAvoidedGrams: number;
+  wasteAvoidedKg: number;
+  co2eAvoidedKg: number;
+  avgWeightPerBundleKg: number;
+  totalBundlesCollected: number;
+}
+
 export interface SellThroughResponse {
   collected: number;
   cancelled: number;
   expired: number;
   collectionRate: number;
   cancelRate: number;
+}
+
+// Insights
+export interface PricingRow {
+  bracket: string;
+  bundleCount: number;
+  totalQuantity: number;
+  collectedCount: number;
+  sellThroughRate: number;
+}
+
+export interface WindowRow {
+  windowLabel: string;
+  totalReservations: number;
+  collectedCount: number;
+  noShowCount: number;
+  collectionRate: number;
+}
+
+export interface CategoryRow {
+  categoryName: string;
+  bundlesPosted: number;
+  totalQuantity: number;
+  collectedCount: number;
+  sellThroughRate: number;
 }
 
 // Forecasting

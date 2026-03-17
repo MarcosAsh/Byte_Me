@@ -43,6 +43,11 @@ export const bundlesApi = {
 
   getById: (id: string) => fetchApi(`/bundles/${id}`),
 
+  bySeller: (sellerId: string, token: string) =>
+    fetchApi(`/bundles/seller/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
   create: (data: {
     title: string;
     description?: string;
@@ -123,6 +128,26 @@ export const analyticsApi = {
 
   sellThrough: (sellerId: string, token: string) =>
     fetchApi(`/analytics/sell-through/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  pricing: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/pricing/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  popularWindows: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/popular-windows/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  popularCategories: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/popular-categories/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  wasteAvoided: (sellerId: string, token: string) =>
+    fetchApi(`/analytics/waste-avoided/${sellerId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }),
 };
@@ -220,6 +245,11 @@ export const forecastApi = {
 
   metrics: (sellerId: string, token: string) =>
     fetchApi(`/forecast/metrics/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  evaluate: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/evaluate/${sellerId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }),
 };

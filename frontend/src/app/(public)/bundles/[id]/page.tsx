@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { bundlesApi, ordersApi } from "@/lib/api/api";
 import { useAuth } from "@/store/auth.store";
 import type { BundlePosting } from "@/lib/api/types";
+import FoodSafetyDisclaimer from "@/components/FoodSafetyDisclaimer";
 
 export default function BundleDetailPage() {
   const params = useParams();
@@ -117,6 +118,10 @@ export default function BundleDetailPage() {
                 <span className="info-value">{bundle.allergensText}</span>
               </div>
             )}
+          </div>
+
+          <div style={{ marginTop: "1rem" }}>
+            <FoodSafetyDisclaimer />
           </div>
 
           {error && <p className="text-error mt-4" role="alert">{error}</p>}

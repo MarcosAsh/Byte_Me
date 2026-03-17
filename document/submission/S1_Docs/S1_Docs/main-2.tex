@@ -1,0 +1,87 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\title{Database Architecture}
+\author{ByteMe Team}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document summarises the CW1 database architecture and data model for Byte Me.
+\section{Architecture and Data Model Overview (CW1)}
+
+\subsection{Deployment Architecture (Railway)}
+
+The CW1 prototype is deployed using Railway, which provides a managed PostgreSQL database and application hosting environment. The system follows a standard three-layer architecture:
+
+\begin{itemize}
+    \item \textbf{Frontend:} Web interface for sellers and organisations.
+    \item \textbf{Backend service:} Handles authentication, role-based access control, reservation logic, and workflow transitions.
+    \item \textbf{Managed PostgreSQL (Railway):} Persistent data storage and enforcement of critical business rules.
+\end{itemize}
+
+All secrets (database URLs, credentials) are configured via environment variables within Railway and are not stored in the repository. The backend is stateless, allowing Railway to manage deployment and scaling without affecting application logic.
+
+The database is intentionally responsible for enforcing key invariants, including oversell prevention, role validation, and rescue-event integrity. This design ensures correctness even if the application layer encounters unexpected input.
+
+\subsection{Data Protection and Cloud Infrastructure}
+
+The system is deployed on Railway, which runs on AWS-managed cloud infrastructure. This provides a secure, production-grade environment for both the backend service and the PostgreSQL database.
+
+Using AWS-backed infrastructure offers several data protection advantages:
+
+\begin{itemize}
+    \item \textbf{Managed database hosting:} PostgreSQL is hosted in a managed environment with secure configuration, automated backups, and infrastructure-level isolation.
+    \item \textbf{Encrypted connections:} Database connections use encrypted transport (TLS), protecting data in transit.
+    \item \textbf{Infrastructure-level security controls:} AWS data centres provide physical security, network segmentation, and resilience measures that would not be achievable in a local deployment.
+    \item \textbf{Environment-based secrets management:} Sensitive credentials (e.g., database URLs) are stored as Railway environment variables and are not committed to the repository.
+\end{itemize}
+
+At the application level, additional data protection measures include password hashing, role-based access control, and strict database constraints to prevent unauthorised or inconsistent data states.
+
+While the CW1 prototype does not process payment details or highly sensitive personal data, deploying on AWS-backed infrastructure ensures that user credentials and operational data are handled within an industry-standard cloud security environment. This supports responsible data management and reduces operational risk compared to local or unmanaged hosting.
+
+\subsection{Data Model Design}
+
+The schema is organised around the real-world flow of surplus food:
+
+\begin{enumerate}
+    \item \textbf{User and Role Management} – \texttt{UserAccount}, \texttt{Seller}, and \texttt{Organisation} define actors and enforce role constraints.
+    \item \textbf{Marketplace Core} – \texttt{BundlePosting} and \texttt{Reservation} implement the posting and reservation workflow.
+    \item \textbf{Impact and Gamification} – \texttt{OrganisationStreakCache}, \texttt{Badge}, and \texttt{OrganisationBadge} support rescue streak tracking.
+    \item \textbf{Issue Handling} – \texttt{IssueReport} enables structured feedback and resolution.
+    \item \textbf{Forecasting and Analytics} – \texttt{DemandObservation}, \texttt{ForecastRun}, \texttt{ForecastOutput}, and \texttt{SellerMetricsWeekly} store demand history, model evaluations, and seller insight metrics.
+\end{enumerate}
+
+The detailed entity attributes and relationships are documented separately in the ERD and backend entity documentation. This section focuses on architectural structure rather than attribute-level detail.
+
+\subsection{Core Workflow Implemented in CW1}
+
+The CW1 vertical slice supports:
+
+\begin{enumerate}
+    \item Sellers create bundles with quantity limits and pickup windows.
+    \item Organisations reserve bundles and receive a hashed claim code.
+    \item Sellers verify pickup and mark reservations as collected.
+    \item A rescue event records estimated meals and CO\textsubscript{2}e saved.
+    \item Organisation streak data updates accordingly.
+\end{enumerate}
+
+Capacity checks are enforced transactionally in the database, guaranteeing an oversell rate of zero. Status transitions are recorded to preserve traceability and support evaluation.
+
+\subsection{Explanation}
+
+At a simple level, the system allows a seller to list surplus food and an organisation to reserve it. The database guarantees that no more bundles can be reserved than are available. When a bundle is collected, the system records the environmental impact and updates the organisation’s rescue streak.
+
+Railway hosts both the backend and the managed database, ensuring that the system can be deployed, demonstrated, and tested consistently without relying on local configuration. The CW1 architecture prioritises correctness, reliability, and clear separation of concerns, forming a stable foundation for the expanded analytics and forecasting components planned for CW2.
+\end{document}

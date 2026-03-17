@@ -1,0 +1,66 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\geometry{margin=1in}
+
+% Code block style
+\lstset{
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    tabsize=2
+}
+
+\title{Automated Test Execution Guide}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Step 4 – Run Automated Tests}
+
+Markers can run the automated tests for the backend using Maven.
+
+\subsection{Run Backend Tests}
+
+From the project root:
+
+\begin{lstlisting}
+cd backend
+mvn test
+\end{lstlisting}
+
+This will execute all unit and integration tests using the Maven Surefire plugin.
+
+Expected output will end with something similar to:
+
+\begin{lstlisting}
+BUILD SUCCESS
+\end{lstlisting}
+
+If any tests fail, Maven will display the failing test names and stack traces.
+
+\subsection{Run a Specific Test Class}
+
+Markers can also run a single test class:
+
+\begin{lstlisting}
+mvn -Dtest=ClassNameTest test
+\end{lstlisting}
+
+Example:
+
+\begin{lstlisting}
+mvn -Dtest=IssueControllerTest test
+\end{lstlisting}
+
+
+
+\end{document}

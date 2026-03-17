@@ -1,0 +1,8 @@
+740013339 Caspar Hadley ch1205@exeter.ac.uk    |  UI designer
+740041290 Eddie Allman eoa207@exeter.ac.uk     |  Software developer
+740043080 Marcos Ashton mia201@exeter.ac.uk    |  Technical lead
+740034869 Rafe Crowley rc916@exeter.ac.uk      |  Data lead
+740041735 Ben Parker bbp202@exeter.ac.uk       |  Project lead
+740062894 Charlie Winders cw1169@exeter.ac.uk  |  DevOps engineer
+710082667 Theo Chan tc698@exeter.ac.uk         |  Documentation and comms
+710082688 Yeung Jason Ly352@exeter.ac.uk       |  QA and testing

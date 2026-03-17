@@ -1,0 +1,49 @@
+Group: 2
+GitHub repo URL: https://github.com/MarcosAsh/Byte_Me
+Deployed demo URL: https://frontend-production-c253c.up.railway.app/
+Test accounts
+ Sellers:                                                                                                                                             
+                               
+  email: seller1@byteme.test                                                                                                                           
+  password: password123                                                                                                                                
+                                                                                                                                                       
+  email: seller2@byteme.test                                                                                                                           
+  password: password123
+
+  email: seller@byteme-test.com
+  password: password123
+
+  email: fix-test-22317@test.com
+  password: password123
+
+  email: respond-test-24883@test.com
+  password: password123
+
+  email: test-seller-7346@test.com
+  password: password123
+
+ Organisations:
+
+  email: orgadmin1@byteme.test
+  password: password123
+
+  email: consumer1@byteme.test
+  password: password123
+
+  email: org@byteme-test.com
+  password: password123
+
+  email: ben@ben.com
+  password: password123
+
+  email: test@test.com
+  password: password123
+
+  email: Ttjectfff@protonmail.com
+  password: password123
+
+  email: respond-org-11476@test.com
+  password: password123
+
+  email: test-org-4918@test.com
+  password: password123

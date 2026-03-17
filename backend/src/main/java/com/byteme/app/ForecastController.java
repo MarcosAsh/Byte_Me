@@ -91,6 +91,18 @@ public class ForecastController {
         return ResponseEntity.ok(result);
     }
 
+    // Evaluate all 3 models on held-out data (read-only, no DB writes)
+    @GetMapping("/evaluate/{sellerId}")
+    public ResponseEntity<?> evaluateModels(@PathVariable UUID sellerId) {
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
+
+        var result = forecastService.evaluateModels(sellerId);
+        return ResponseEntity.ok(result);
+    }
+
     // Get model comparison metrics for a seller
     @GetMapping("/comparison/{sellerId}")
     public ResponseEntity<?> getComparison(@PathVariable UUID sellerId) {

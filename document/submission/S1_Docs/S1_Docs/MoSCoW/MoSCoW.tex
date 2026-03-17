@@ -1,0 +1,191 @@
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{setspace}
+\usepackage{float}[HERE]
+\usepackage{placeins}
+
+\title{\Huge \textbf{MoSCoW Prioritisation}\\[0.5em]
+\Large Surplus Food Marketplace Prototype}
+\author{Rafe Crowley}
+\date{February 2026}
+
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\Huge \textbf{MoSCoW Prioritisation}}\\[1em]
+{\Large Surplus Food Marketplace Prototype}\\[3em]
+{\large ByteMe team}\\
+{\large February 2026}\\[4em]
+\textit{Coursework 1 – Prototype Planning and Prioritisation}
+\vfill
+\end{titlepage}
+
+\section{MoSCoW Prioritisation}
+\subsection{Feature Prioritisation}
+
+\renewcommand{\arraystretch}{1.25}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{3.4cm}|p{3.4cm}|p{3.4cm}|p{3.4cm}|}
+\hline
+\textbf{Must Have (Sprint 1)} &
+\textbf{Should Have (Sprint 2)} &
+\textbf{Could Have (If Time)} &
+\textbf{Will Not Have (Out of Scope)} \\
+\hline
+
+Login and role-based access control &
+UX polish and accessibility refinement &
+Advanced dietary preference filters &
+In-app payment processing (explicitly disallowed) \\
+\hline
+
+Clean landing page &
+Map view of nearby stores &
+Seller and buyer review system &
+Paid spin / gambling-style rewards \\
+\hline
+
+Seller bundle posting (quantity, price, pickup window, allergens) &
+Issue reporting workflow &
+Google Maps walking-time integration &
+Real-time delivery tracking \\
+\hline
+
+Consumer browsing and reservation system &
+Terms of Service page &
+“Meet the Developers” page &
+Live chat support \\
+\hline
+
+Claim code generation and verification &
+Cookies policy (if applicable) &
+Extended gamification features &
+Full e-commerce checkout system \\
+\hline
+
+Rescue streak tracking (mandatory requirement) &
+Data protection and privacy policy &
+Advanced seller dashboard customisation &
+Social media integration \\
+\hline
+
+Minimum seller analytics (sell-through and waste proxy) &
+Full analytics suite (pricing and operational insights) &
+Leaderboard functionality &
+Complex loyalty marketplace \\
+\hline
+
+Baseline forecasting model and evaluation snapshot &
+Improved forecasting model with recommendation logic &
+Weather API integration &
+AI chatbot assistant \\
+\hline
+
+Seeded dataset (25+ sellers, 250+ bundles, 400+ reservations) &
+Maintainer/admin tools &
+Extended accessibility enhancements &
+Real payment gateway integration \\
+\hline
+
+Allergen display and safety disclaimer &
+Formal accessibility audit &
+ &
+ \\
+\hline
+\end{tabular}
+\caption{Expanded MoSCoW prioritisation aligned to coursework specification.}
+\end{table}
+
+\FloatBarrier
+
+\clearpage
+
+\subsection{Sprint Allocation and Justification}
+
+\renewcommand{\arraystretch}{1.3}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{2cm}|p{8cm}|}
+\hline
+\textbf{Feature} & \textbf{Sprint} & \textbf{Justification} \\
+\hline
+
+End-to-end marketplace workflow (Post → Reserve → Claim → Streak update) &
+Sprint 1 &
+Required vertical slice for CW1 demonstration. Core system value depends on reliable end-to-end execution. \\
+\hline
+
+Seller analytics (minimum two views) &
+Sprint 1 &
+Explicit CW1 requirement demonstrating measurable waste reduction and operational insight. \\
+\hline
+
+Baseline forecasting model &
+Sprint 1 &
+Specification requires at least one baseline forecast and evaluation snapshot in CW1. \\
+\hline
+
+Seeded dataset &
+Sprint 1 &
+Mandatory for marking; system must operate without external services. \\
+\hline
+
+Issue reporting system &
+Sprint 2 &
+Required for full v1.0 system but not part of Sprint 1 vertical slice. \\
+\hline
+
+Expanded analytics suite &
+Sprint 2 &
+CW2 requires deeper analytical evaluation and pricing effectiveness insights. \\
+\hline
+
+Improved forecasting with recommendation logic &
+Sprint 2 &
+CW2 requires comparison against baselines on held-out data and actionable recommendations with confidence labels. \\
+\hline
+
+Maintainer tools and deployment documentation &
+Sprint 2 &
+Part of the client handover pack and professional practice evidence for final submission. \\
+\hline
+
+Accessibility refinement &
+Sprint 2 &
+Baseline compliance achieved in Sprint 1; full audit and refinement in Sprint 2. \\
+\hline
+
+Policies (ToS, Privacy, Cookies) &
+Sprint 1 / 2 &
+Basic policy links included in Sprint 1; expanded documentation aligned with final system in Sprint 2. \\
+\hline
+
+Maps, reviews, extended gamification &
+If time (Sprint 2+) &
+Enhancement features that do not affect system reliability, forecasting accuracy, or core marking criteria. \\
+\hline
+
+Payments and gambling-style mechanics &
+Out of Scope &
+Explicitly prohibited by coursework brief and introduce unnecessary legal and security risk. \\
+\hline
+\end{tabular}
+\caption{Sprint allocation and rationale aligned to CW1 and CW2 marking criteria.}
+\end{table}
+
+\FloatBarrier
+
+\vspace{8mm}
+
+\section{Prioritisation Rationale}
+
+The prioritisation strategy focuses on delivering a reliable vertical slice in Sprint 1 that satisfies all mandatory coursework requirements while clearly demonstrating system value. Core marketplace functionality (posting, reserving, claim code verification, and streak updates), baseline analytics, forecasting, and a fully seeded dataset are treated as non-negotiable because they directly map to the marking criteria and defined measures of success (zero oversell rate, functioning forecasting evaluation, and measurable waste impact). Sprint 2 expands depth rather than breadth, strengthening analytics, forecasting accuracy, governance documentation, and maintainability to support client handover and professional practice evidence. Enhancements such as maps, reviews, and extended gamification are deliberately deprioritised to avoid scope creep, while payment processing and gambling-style mechanics are explicitly excluded due to specification constraints and legal risk. This structured approach ensures technical completeness, risk control, and alignment with both CW1 and CW2 assessment objectives.
+
+\end{document}

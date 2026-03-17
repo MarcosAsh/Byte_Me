@@ -19,16 +19,18 @@ public class GamificationController {
     private final ReservationRepository reservationRepo;
     private final BadgeRepository badgeRepo;
     private final OrganisationBadgeRepository orgBadgeRepo;
+    private final RescueEventRepository rescueEventRepo;
 
     // Constructor injection
     public GamificationController(OrganisationRepository orgRepo, OrganisationStreakCacheRepository streakRepo,
                                    ReservationRepository reservationRepo, BadgeRepository badgeRepo,
-                                   OrganisationBadgeRepository orgBadgeRepo) {
+                                   OrganisationBadgeRepository orgBadgeRepo, RescueEventRepository rescueEventRepo) {
         this.orgRepo = orgRepo;
         this.streakRepo = streakRepo;
         this.reservationRepo = reservationRepo;
         this.badgeRepo = badgeRepo;
         this.orgBadgeRepo = orgBadgeRepo;
+        this.rescueEventRepo = rescueEventRepo;
     }
 
     // Check that the current user owns this org profile
@@ -76,11 +78,16 @@ public class GamificationController {
         int currentStreak = streak != null ? streak.getCurrentStreakWeeks() : 0;
         int bestStreak = streak != null ? streak.getBestStreakWeeks() : 0;
 
+        long mealsRescued = rescueEventRepo.sumMealsByOrgId(orgId);
+        long co2eSavedGrams = rescueEventRepo.sumCo2eByOrgId(orgId);
+
         return ResponseEntity.ok(new StatsResponse(
                 totalReservations,
                 currentStreak,
                 bestStreak,
-                badgeCount
+                badgeCount,
+                mealsRescued,
+                co2eSavedGrams
         ));
     }
 
@@ -123,17 +130,24 @@ public class GamificationController {
         private int currentStreakWeeks;
         private int bestStreakWeeks;
         private int badgesEarned;
+        private long mealsRescued;
+        private long co2eSavedGrams;
 
-        public StatsResponse(int totalReservations, int currentStreakWeeks, int bestStreakWeeks, int badgesEarned) {
+        public StatsResponse(int totalReservations, int currentStreakWeeks, int bestStreakWeeks,
+                              int badgesEarned, long mealsRescued, long co2eSavedGrams) {
             this.totalReservations = totalReservations;
             this.currentStreakWeeks = currentStreakWeeks;
             this.bestStreakWeeks = bestStreakWeeks;
             this.badgesEarned = badgesEarned;
+            this.mealsRescued = mealsRescued;
+            this.co2eSavedGrams = co2eSavedGrams;
         }
 
         public int getTotalReservations() { return totalReservations; }
         public int getCurrentStreakWeeks() { return currentStreakWeeks; }
         public int getBestStreakWeeks() { return bestStreakWeeks; }
         public int getBadgesEarned() { return badgesEarned; }
+        public long getMealsRescued() { return mealsRescued; }
+        public long getCo2eSavedGrams() { return co2eSavedGrams; }
     }
 }

@@ -1,0 +1,25 @@
+\documentclass[]{report}
+
+\usepackage{graphicx}
+\usepackage[]{hyperref}
+\usepackage[]{verbatim}
+
+\begin{document}
+	\begin{titlepage}
+		\centering
+		\vspace*{5cm}
+		\includegraphics[width=10cm]{BM.png}
+		\vspace*{1cm}
+		{\Huge \\ Licensing Information}
+	\end{titlepage}
+	\section*{License}
+	The license we have chosen to use for our application is the Apache License 2.0\cite{asf_apache_2004}, and can be seen in full as follows.
+	\vspace*{1cm}
+	\verbatiminput{LICENSE.txt}
+	
+	\section*{Justification}
+	We went with Apache 2.0 mainly because all the libraries we use (Spring Boot, Next.js, etc.) already use permissive licences, so there are no compatibility issues. It also has a patent clause which gives us a bit more protection than something like MIT. Overall it lets anyone use or build on our code while still requiring them to give credit, which felt like the right balance for a uni project.
+	
+	\bibliographystyle{acm}
+	\bibliography{lref/lref}
+\end{document}

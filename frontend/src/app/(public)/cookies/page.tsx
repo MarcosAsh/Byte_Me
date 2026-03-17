@@ -8,7 +8,7 @@ export default function CookiePage() {
         Last updated: February 05, 2026
       </p>
 
-      <div className="border rounded-lg shadow-inner h-[70vh] overflow-y-scroll p-6 bg-white">
+      <div className="border rounded-lg shadow-inner h-[70vh] overflow-y-scroll p-6 bg-white text-gray-900">
         <div className="prose prose-lg max-w-none space-y-4">
           <h2>Cookies Policy</h2>
           <p>

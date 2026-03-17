@@ -1,0 +1,170 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{amsmath}
+
+% Page geometry
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% Color definitions
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Code listing style
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\title{\textbf{System Evaluation and Measures of Success}}
+\author{Development Team}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This article outlines the five key measures of success used to evaluate the ``Byte Me'' food rescue platform. Each measure is defined with specific criteria and supported by evidence from the system's codebase, ensuring reliability, accuracy, and environmental impact.
+\end{abstract}
+
+\section{Marketplace Reliability}
+
+\subsection{Oversell Rate (Target: 0\%)}
+\textbf{Definition:} The system must never allow more reservations than the available quantity of a bundle.
+
+\textbf{Evidence:} The \texttt{BundlePosting} entity enforces a strict logic check before any reservation is permitted. The \texttt{canReserve} method explicitly verifies inventory levels.
+
+\begin{lstlisting}[language=Java, caption=BundlePosting.java Inventory Logic]
+// Check if can reserve
+public boolean canReserve(int qty) {
+    return status == Status.ACTIVE && (quantityReserved + qty) <= quantityTotal;
+}
+\end{lstlisting}
+
+Furthermore, the \texttt{OrderController} transactionally locks this process. If \texttt{canReserve(1)} returns false, the system immediately rejects the request with a \texttt{400 Bad Request}, ensuring the oversell rate remains strictly at 0.
+
+\subsection{Handling Expiries and No-Shows}
+\textbf{Definition:} The lifecycle of every bundle must be accounted for, distinguishing between successful collections, expired goods, and user no-shows.
+
+\textbf{Evidence:} 
+\begin{itemize}
+    \item \textbf{Status Tracking:} The \texttt{Reservation.Status} enum includes specific states for \texttt{NO\_SHOW}, \texttt{EXPIRED}, and \texttt{CANCELLED}.
+    \item \textbf{Automated Cleanup:} The \texttt{BundlePostingRepository} includes a query to identify expired bundles automatically:
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption=Finding Expired Bundles]
+@Query("SELECT b FROM BundlePosting b WHERE b.status = 'ACTIVE' AND b.pickupEndAt < :now")
+List<BundlePosting> findExpired(Instant now);
+\end{lstlisting}
+
+This ensures that inventory lists remain fresh and accurate without manual intervention.
+
+\section{Forecast Accuracy}
+
+\subsection{Methodology}
+We compare our chosen predictive model against standard baselines using a Held-Out Evaluation approach (80\% training data, 20\% evaluation data).
+
+\subsection{Metrics \& Baselines}
+The \texttt{ForecastService} calculates three key error metrics for every model run:
+\begin{enumerate}
+    \item \textbf{MAE (Mean Absolute Error):} Average magnitude of reservation errors.
+    \item \textbf{RMSE (Root Mean Squared Error):} Penalizes larger outliers.
+    \item \textbf{Brier Score:} Evaluates the accuracy of probabilistic no-show predictions.
+\end{enumerate}
+
+These metrics are calculated by comparing the \textbf{Chosen Model (EMA-Weighted)} against two baselines:
+\begin{itemize}
+    \item \textbf{Moving Average (4-Week):} A simple sliding window average.
+    \item \textbf{Seasonal Naive:} Predicts based on the same ISO Day of Week from history.
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption=Model Comparison Logic]
+// Compare models and save metrics
+Map<String, Object> maMetrics = Map.of(
+    "MAE_reservations", calculateMAE(maPredicted, actualRes),
+    "RMSE_reservations", calculateRMSE(maPredicted, actualRes),
+    "Brier_no_show", calculateBrierScore(maNoShowPred, actualNoShow));
+\end{lstlisting}
+
+The system stores these results in the \texttt{ForecastRun} entity to allow for continuous performance monitoring.
+
+\section{Waste Impact \& Carbon Reduction}
+
+\subsection{Estimated Waste Avoided}
+\textbf{Measure:} The total weight of food diverted from landfills.
+
+\textbf{Evidence:} The \texttt{SellerMetricsWeekly} entity tracks \texttt{wasteAvoidedGrams}. This is calculated by multiplying the number of \texttt{COLLECTED} reservations by the \texttt{estimatedWeightGrams} defined in the bundle posting.
+
+\subsection{Real-World Example: CO2e Prevention}
+To illustrate, consider the sample data for ``Sourdough \& Co Bakery'' used in our forecast demo.
+
+\begin{itemize}
+    \item \textbf{Scenario:} A bakery posts surplus bundles with an estimated weight of 800g each.
+    \item \textbf{Observations:} On Jan 30, 2026, the bakery observed 16 reservations with a 9\% no-show rate.
+    \item \textbf{Food Waste Avoided:}
+    \[
+    \text{Mass} = 16 \times (1 - 0.09) \times 0.8\text{ kg} \approx 11.65\text{ kg}
+    \]
+    \item \textbf{Carbon Impact:} Using a standard conversion factor of 2.5 kg CO2e per kg of food waste prevented (WRAP, 2023):
+    \[
+    \text{CO2e Saved} = 11.65\text{ kg} \times 2.5 = \textbf{29.1 kg CO2e}
+    \]
+\end{itemize}
+
+This metric is aggregated weekly and displayed on the seller dashboard, providing tangible feedback on their environmental contribution. The \texttt{CO2\_SAVER} badge is explicitly awarded when organizations reach 10 collections, further reinforcing this goal.
+
+\section{User Experience (Task-Based)}
+
+\subsection{Reserving and Claiming}
+\textbf{Target:} Sub-second response times for reservation and collection tasks.
+
+\textbf{Evidence:} 
+\begin{itemize}
+    \item \textbf{Instant Reservation:} The \texttt{create} order endpoint generates a secure 6-digit \texttt{claimCode} immediately upon success.
+    \item \textbf{Secure Collection:} The collection process uses a hashed verification system. When an organisation presents a code, the backend verifies it using \texttt{passwordEncoder.matches()}.
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption=Claim Code Verification]
+if (!passwordEncoder.matches(claimReq.getClaimCode(), reservation.getClaimCodeHash())) {
+    return ResponseEntity.badRequest().body("Invalid claim code");
+}
+\end{lstlisting}
+
+This approach balances high security with the speed required for retail environments.
+
+\section{Gamification \& Engagement}
+
+\subsection{Measures}
+\begin{itemize}
+    \item \textbf{Retention:} Tracking \texttt{currentStreakWeeks} via the \texttt{OrganisationStreakCache}.
+    \item \textbf{Milestones:} Awarding badges like \texttt{STREAK\_4} and \texttt{CO2\_SAVER}.
+\end{itemize}
+
+\textbf{Evidence:} The system automatically updates streak counters and checks for badge eligibility after every successful collection, providing immediate positive reinforcement to the user.
+
+\end{document}

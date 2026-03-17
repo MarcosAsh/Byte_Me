@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/store/auth.store";
 import { forecastApi } from "@/lib/api/api";
 import type {
@@ -129,6 +130,9 @@ export default function SellerAnalyticsPage() {
           <p className="page-subtitle">
             Forecast demand, compare models, and get posting recommendations.
           </p>
+          <Link href="/forecast-evaluation" className="btn btn-secondary" style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}>
+            View Model Evaluation Report
+          </Link>
         </div>
         <button
           className="btn btn-primary"

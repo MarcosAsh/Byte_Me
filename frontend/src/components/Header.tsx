@@ -32,12 +32,13 @@ export default function Header() {
             <>
               <NavLink href="/dashboard">Dashboard</NavLink>
               <NavLink href="/analytics">Analytics</NavLink>
-              <NavLink href="/bundles">Bundles</NavLink>
+              <NavLink href="/insights">Insights</NavLink>
+              <NavLink href="/my-bundles">Bundles</NavLink>
               <NavLink href="/issues">Issues</NavLink>
             </>
           ) : isOrgAdmin ? (
             <>
-              <NavLink href="/home">Home</NavLink>
+              <NavLink href="/home">Dashboard</NavLink>
               <NavLink href="/bundles">Browse Bundles</NavLink>
               <NavLink href="/reservations">Reservations</NavLink>
               <NavLink href="/gamification">Achievements</NavLink>
@@ -91,12 +92,13 @@ export default function Header() {
             <>
               <NavLink href="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>
               <NavLink href="/analytics" onClick={() => setOpen(false)}>Analytics</NavLink>
-              <NavLink href="/bundles" onClick={() => setOpen(false)}>Bundles</NavLink>
+              <NavLink href="/insights" onClick={() => setOpen(false)}>Insights</NavLink>
+              <NavLink href="/my-bundles" onClick={() => setOpen(false)}>Bundles</NavLink>
               <NavLink href="/issues" onClick={() => setOpen(false)}>Issues</NavLink>
             </>
           ) : isOrgAdmin ? (
             <>
-              <NavLink href="/home" onClick={() => setOpen(false)}>Home</NavLink>
+              <NavLink href="/home" onClick={() => setOpen(false)}>Dashboard</NavLink>
               <NavLink href="/bundles" onClick={() => setOpen(false)}>Browse Bundles</NavLink>
               <NavLink href="/reservations" onClick={() => setOpen(false)}>Reservations</NavLink>
               <NavLink href="/gamification" onClick={() => setOpen(false)}>Achievements</NavLink>

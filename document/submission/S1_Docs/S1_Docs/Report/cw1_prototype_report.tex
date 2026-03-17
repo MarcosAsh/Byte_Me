@@ -1,0 +1,560 @@
+\documentclass[11pt, a4paper]{report}
+
+% Package init
+\usepackage{graphicx}
+\usepackage{standalone}
+\usepackage{titlesec}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{setspace}
+\usepackage{float}[HERE]
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{tikz}
+\usepackage{geometry}
+
+% Chapter formatting
+\titleformat{\chapter}[hang]
+{\normalfont \Huge \bfseries}
+{\Huge \thechapter.}
+{15pt}
+{\Huge}
+[\titlerule]
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+
+\captionsetup[table]{justification=centering}
+
+\newenvironment{motivation}{\begin{quotation}\noindent\small\itshape}{\end{quotation}}
+
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
+
+\geometry{margin=1in}
+
+% Color definitions
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Code listing style
+\lstdefinestyle{code}{
+backgroundcolor=\color{backcolour},
+commentstyle=\color{codegreen},
+keywordstyle=\color{magenta},
+numberstyle=\tiny\color{codegray},
+stringstyle=\color{codepurple},
+basicstyle=\ttfamily\footnotesize,
+breakatwhitespace=false,
+breaklines=true,
+captionpos=b,
+keepspaces=true,
+numbers=left,
+numbersep=5pt,
+showspaces=false,
+showstringspaces=false,
+showtabs=false,
+tabsize=2
+}
+
+\lstset{style=code}
+
+\tikzset{
+box/.style={rectangle, draw, rounded corners=2pt, text width=2.6cm,
+minimum height=0.8cm, align=center, font=\small},
+sbox/.style={rectangle, draw, rounded corners=2pt, text width=2.2cm,
+minimum height=0.7cm, align=center, font=\footnotesize},
+widebox/.style={rectangle, draw, rounded corners=2pt, text width=5cm,
+minimum height=0.8cm, align=center, font=\small},
+db/.style={rectangle, draw, text width=2.4cm, minimum height=0.8cm,
+align=center, font=\small\bfseries},
+arr/.style={-{Stealth[length=5pt]}, thick},
+darr/.style={arr, dashed},
+lbl/.style={font=\scriptsize, fill=white, inner sep=1pt},
+}
+
+% Document
+\begin{document}
+% Title Page
+\begin{titlepage}
+\centering
+\vspace*{4cm}
+\includegraphics[width=10cm]{BM.png}
+\vspace*{2cm}
+{\Huge \\ A Food Waste Rescue Marketplace and Demand Forecasting Application}
+\vspace*{5cm}
+\textbf{\\Eddie Allman, Marcos Ashton, Theo Chan, Rafe Crowley,\\ Caspar Hadley, Ben Parker, Charlie Winders, Jason Yeung}
+\end{titlepage}
+\chapter{Executive Summary}
+\section{Problem Identified}
+Using data from 2021 and 2022, it has been estimated that 11\% of the UK's total food waste has been created by the hospitality and food service industry\cite{wrap_uk_2025}. Globally, food loss and waste accounts for 8-10\% of greenhouse gas emissions\cite{fao_fao_2013}, meaning that hospitality food waste is directly responsible for up to 1.1\% of total greenhouse pollution. Shifting focus to employee statistics, a survey on staff productivity has shown that over an average 8 hour working day, only 2 hours and 53 minutes are spent productively\cite{ltd_survey_2025}. With limited productive time and long working hours, many employees resort to ordering takeaway meals at the end of the day, adding unnecessary personal expense while perfectly edible restaurant food goes to waste.
+\section{Proposed Solution}
+Byte Me is a business-to-business food rescue marketplace that connects food service sellers with organisations looking to provide affordable meals for their employees. Restaurants and cafés list surplus food bundles at reduced prices before the end of their trading day. Organisations can then browse, reserve, and collect these bundles using a secure claim code system. The platform includes a demand forecasting engine that helps sellers predict reservation volumes and reduce overproduction. A gamification layer with rescue streaks and achievement badges incentivises consistent participation, while seller analytics dashboards provide insight into sell-through rates, waste avoided, and carbon impact. By targeting the commercial sector rather than individual consumers, Byte Me enables bulk food rescue at scale, reducing hospitality food waste while offering organisations a practical employee benefit.
+
+\chapter{Prioritised Requirements}
+\begin{motivation}
+An explanation of the features we think could possible be included in the final version of Byte Me, and justification for those that are being implemented in Sprint 1. Features are classified in accordance with the MoSCoW format; Must have, should have, could have, and will not have.
+\end{motivation}
+\section{Prioritisation Rationale}
+The prioritisation strategy focuses on delivering a reliable vertical slice in Sprint 1 that satisfies all mandatory coursework requirements while clearly demonstrating system value. Core marketplace functionality (posting, reserving, claim code verification, and streak updates), baseline analytics, forecasting, and a fully seeded dataset are treated as non-negotiable because they directly map to the marking criteria and defined measures of success (zero oversell rate, functioning forecasting evaluation, and measurable waste impact). Sprint 2 expands depth rather than breadth, strengthening analytics, forecasting accuracy, governance documentation, and maintainability to support client handover and professional practice evidence. Enhancements such as maps, reviews, and extended gamification are deliberately deprioritised to avoid scope creep, while payment processing and gambling-style mechanics are explicitly excluded due to specification constraints and legal risk. This structured approach ensures technical completeness, risk control, and alignment with both CW1 and CW2 assessment objectives.
+\section{MoSCoW Prioritisation}
+\renewcommand{\arraystretch}{1.25}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{3.4cm}|p{3.4cm}|p{3.4cm}|p{3.4cm}|}
+\hline
+\textbf{Must Have (Sprint 1)} &
+\textbf{Should Have (Sprint 2)} &
+\textbf{Could Have (If Time)} &
+\textbf{Will Not Have (Out of Scope)} \\
+\hline
+Login and role-based access control &
+UX polish and accessibility refinement &
+Advanced dietary preference filters &
+In-app payment processing (explicitly disallowed) \\
+\hline
+Clean landing page &
+Map view of nearby stores &
+Seller and buyer review system &
+Paid spin / gambling-style rewards \\
+\hline
+Seller bundle posting (quantity, price, pickup window, allergens) &
+Issue reporting workflow &
+Google Maps walking-time integration &
+Real-time delivery tracking \\
+\hline
+Consumer browsing and reservation system &
+Terms of Service page &
+“Meet the Developers” page &
+Live chat support \\
+\hline
+Claim code generation and verification &
+Cookies policy (if applicable) &
+Extended gamification features &
+Full e-commerce checkout system \\
+\hline
+Rescue streak tracking (mandatory requirement) &
+Data protection and privacy policy &
+Advanced seller dashboard customisation &
+Social media integration \\
+\hline
+Minimum seller analytics (sell-through and waste proxy) &
+Full analytics suite (pricing and operational insights) &
+Leaderboard functionality &
+Complex loyalty marketplace \\
+\hline
+Baseline forecasting model and evaluation snapshot &
+Improved forecasting model with recommendation logic &
+Weather API integration &
+AI chatbot assistant \\
+\hline
+Seeded dataset (25+ sellers, 250+ bundles, 400+ reservations) &
+Maintainer/admin tools &
+Extended accessibility enhancements &
+Real payment gateway integration \\
+\hline
+Allergen display and safety disclaimer &
+Formal accessibility audit &
+&
+\\
+\hline
+\end{tabular}
+\caption{Expanded MoSCoW prioritisation aligned to coursework specification.}
+\end{table}
+\FloatBarrier
+\clearpage
+\subsection{Sprint Allocation and Justification}
+\renewcommand{\arraystretch}{1.3}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{2cm}|p{8cm}|}
+\hline
+\textbf{Feature} & \textbf{Sprint} & \textbf{Justification} \\
+\hline
+End-to-end marketplace workflow (Post -> Reserve -> Claim -> Streak update) &
+Sprint 1 &
+Required vertical slice for CW1 demonstration. Core system value depends on reliable end-to-end execution. \\
+\hline
+Seller analytics (minimum two views) &
+Sprint 1 &
+Explicit CW1 requirement demonstrating measurable waste reduction and operational insight. \\
+\hline
+Baseline forecasting model &
+Sprint 1 &
+Specification requires at least one baseline forecast and evaluation snapshot in CW1. \\
+\hline
+Seeded dataset &
+Sprint 1 &
+Mandatory for marking; system must operate without external services. \\
+\hline
+Issue reporting system &
+Sprint 2 &
+Required for full v1.0 system but not part of Sprint 1 vertical slice. \\
+\hline
+Expanded analytics suite &
+Sprint 2 &
+CW2 requires deeper analytical evaluation and pricing effectiveness insights. \\
+\hline
+Improved forecasting with recommendation logic &
+Sprint 2 &
+CW2 requires comparison against baselines on held-out data and actionable recommendations with confidence labels. \\
+\hline
+Maintainer tools and deployment documentation &
+Sprint 2 &
+Part of the client handover pack and professional practice evidence for final submission. \\
+\hline
+Accessibility refinement &
+Sprint 2 &
+Baseline compliance achieved in Sprint 1; full audit and refinement in Sprint 2. \\
+\hline
+Policies (ToS, Privacy, Cookies) &
+Sprint 1 / 2 &
+Basic policy links included in Sprint 1; expanded documentation aligned with final system in Sprint 2. \\
+\hline
+Maps, reviews, extended gamification &
+If time (Sprint 2+) &
+Enhancement features that do not affect system reliability, forecasting accuracy, or core marking criteria. \\
+\hline
+Payments and gambling-style mechanics &
+Out of Scope &
+Explicitly prohibited by coursework brief and introduce unnecessary legal and security risk. \\
+\hline
+\end{tabular}
+\caption{Sprint allocation and rationale aligned to CW1 and CW2 marking criteria.}
+\end{table}
+\chapter{Architecture v1}
+\begin{motivation}
+Diagrams and explanations from the design phases of our agile development. Included is information about our frontend, backend, and database systems, along with data flow and user interaction specifics.
+\end{motivation}
+\section{Sitemap and User Journey}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{SiteMapTGTG.jpg}
+\caption{User Flow Diagram for Byte Me}
+\label{fig:sitemap}
+\end{figure}
+\vspace{1ex}
+\subsection{User Flow Justification}
+Public -> When a user initially loads the website thy see our landing page. This displays key details about how the project works and its goals, as well as giving them access to log in and register pages, alongside key pages via. links in the header and footer. Without being logged in, a user can access all legality associated pages through the footer, specifically; the privacy policy, terms and conditions, cookies policy, allergens notice, accessibility statement, and license pages. It is important these remain publicly available for full disclosure to users even before they have made or logged into an account. All users are also given access to the bundles page, and through this the bundles/[id] page, giving them key details, dates and price points of any available or soon to be available bundles from our sellers.\\
+Organisation Admins -> Once an org admin has logged in or registered via. the pages on our header, they will gain authorisation to all org admin specific pages. For now, this is the gamification page, and the reservations page. They will also gain access to new features within the bundles/[id] page allowing them to reserve bundles under their organisation name and acquire a claim code for picking up said bundle.
+Any reservations made can be re accessed by visiting the reservations page which is made available to org admins in the header. This allows users to reserve bundles in advance and return later to cancel or retrieve their claim code, giving our users more freedom and ease when using our service. The gamification page displays any badges achieved and any progress towards over achievable badges. This allows companies to see the important steps they are making to help the environment and reduce food waste, while giving them real, certified badges they can display to show the work they are doing to others.\\
+Sellers -> Once logged in as a seller, the user is redirected to their personalised seller dashboard page. This gives them insight into how many bundles have been posted, sold and cancelled, alongside their active bundles and links to seller specific pages. Sellers can access a special bundle page, providing a form for them to create and post bundles which are made available immediately or at a scheduled time to all users on our platform. We believe it is important for our sellers to have a simple UI for bundle creation as we understand this is not the main focus of their business, and the ease of creation increases the amount of bundles made, and therefore reducing food wasted. Sellers can also access the analytics page, giving detailed forecasting of their demand in general, and for individual bundles. This helps them tweak supply to further minimise food waste, as well as saving money for their businesses, providing a real incentive for our sellers to waste as little food as possible.
+\section{Security Integration}
+\begin{center}
+\begin{tikzpicture}[node distance=1cm and 2cm]
+\node[widebox] (req) {Incoming HTTP Request};
+\node[box, below=1cm of req] (corsf) {CORS Filter};
+\node[box, below=0.8cm of corsf] (jwtf) {JWT Auth Filter};
+\node[box, below left=0.8cm and -0.5cm of jwtf] (jutil) {JwtUtil\\(validate + parse)};
+\node[box, below right=0.8cm and -0.5cm of jwtf] (sctx) {SecurityContext\\(set auth)};
+\node[widebox, below=2.5cm of jwtf] (ctrl) {Controller Endpoint};
+\node[box, right=3cm of jwtf] (pubpaths) {Public Path\\Whitelist};
+\draw[arr] (req) -- (corsf);
+\draw[arr] (corsf) -- node[lbl, right] {Origin check} (jwtf);
+\draw[arr] (jwtf) -- (jutil);
+\draw[arr] (jwtf) -- (sctx);
+\draw[arr] (sctx) -- (ctrl);
+\draw[darr] (pubpaths) -- node[lbl, above] {Skip JWT} (jwtf);
+\node[anchor=north west, font=\scriptsize, text width=3.5cm, below=0.2cm of pubpaths] {
+/api/auth/**\\
+GET /api/bundles\\
+GET /api/categories\\
+GET /api/gamification/badges
+};
+\end{tikzpicture}
+\end{center}
+CORS runs first. JWT filter validates tokens for non whitelisted paths and sets the SecurityContext. Sessions are stateless passwords use BCrypt.
+\section{Full-Stack Integration Diagram}
+\begin{center}
+% FIX: ensure the whole diagram fits on page 1 by limiting BOTH width and height
+\begin{adjustbox}{max totalsize={\textwidth}{0.78\textheight},center}
+\begin{tikzpicture}[node distance=0.6cm and 0.2cm]
+\node[widebox] (nextjs) {\textbf{Next.js Frontend} -- React 19 + TailwindCSS};
+\node[sbox, below left=0.5cm and 0cm of nextjs] (pages) {Pages /\\Components};
+\node[sbox, below right=0.5cm and 0cm of nextjs] (apiclient) {API Client\\(fetch)};
+\draw[arr] (nextjs) -- (pages);
+\draw[arr] (nextjs) -- (apiclient);
+\node[widebox, below=2cm of nextjs] (secchain) {\textbf{SecurityFilterChain} -- Spring Security};
+\node[sbox, below left=0.5cm and -0.3cm of secchain] (jwtfilter) {JwtAuth\\Filter};
+\node[sbox, below right=0.5cm and -0.3cm of secchain] (jwtutil) {JwtUtil};
+\node[sbox, left=0.2cm of jwtfilter] (cors) {CORS\\Config};
+\draw[arr] (secchain) -- (jwtfilter);
+\draw[arr] (secchain) -- (jwtutil);
+\draw[arr] (secchain) -- (cors);
+\draw[arr] (jwtfilter) -- (jwtutil);
+\node[sbox, below=3.5cm of secchain, xshift=-2.5cm] (reservec) {Reservation\\Controller};
+\node[sbox, right=0.2cm of reservec] (bundlec) {Bundle\\Controller};
+\node[sbox, right=0.2cm of bundlec] (authc) {Auth\\Controller};
+\node[sbox, below=0.3cm of reservec] (issuec) {Issue\\Controller};
+\node[sbox, right=0.2cm of issuec] (analyticsc) {Analytics\\Controller};
+\node[sbox, right=0.2cm of analyticsc] (gamc) {Gamification\\Controller};
+\node[sbox, below=1.8cm of issuec] (reserves) {Reservation\\Service};
+\node[sbox, right=0.2cm of reserves] (bundles) {Bundle\\Service};
+\node[sbox, right=0.2cm of bundles] (auths) {Auth\\Service};
+\node[sbox, below=0.3cm of reserves] (issues) {Issue\\Service};
+\node[sbox, right=0.2cm of issues] (analytics) {Analytics\\Service};
+\node[sbox, right=0.2cm of analytics] (gams) {Gamification\\Service};
+\node[sbox, below=1.8cm of issues] (rrepo) {Reservation\\Repo};
+\node[sbox, right=0.2cm of rrepo] (brepo) {Bundle\\Repo};
+\node[sbox, right=0.2cm of brepo] (urepo) {UserAccount\\Repo};
+\node[sbox, below=0.3cm of rrepo] (irepo) {IssueReport\\Repo};
+\node[sbox, right=0.2cm of irepo] (srepo) {Seller\\Repo};
+\node[sbox, right=0.2cm of srepo] (obrepo) {OrgBadge\\Repo};
+\node[widebox, below=1.2cm of srepo] (db) {\textbf{PostgreSQL} (Railway)};
+\draw[arr] (apiclient) -- node[lbl, right] {HTTP + JWT} (secchain);
+\draw[arr] (jwtfilter.south) -- +(0,-0.7) -| (authc.north);
+\draw[darr] (jwtfilter.south) -- +(0,-0.7) -| (bundlec.north);
+\draw[darr] (jwtfilter.south) -- +(0,-0.7) -| (reservec.north);
+\draw[arr] (reservec.south) -- +(0,-0.5) -| (reserves.north);
+\draw[arr] (bundlec.south) -- +(0,-0.5) -| (bundles.north);
+\draw[arr] (authc.south) -- +(0,-0.5) -| (auths.north);
+\draw[arr] (issuec) -- (issues);
+\draw[arr] (analyticsc) -- (analytics);
+\draw[arr] (gamc) -- (gams);
+\draw[arr] (reserves.south) -- +(0,-0.5) -| (rrepo.north);
+\draw[arr] (bundles.south) -- +(0,-0.5) -| (brepo.north);
+\draw[arr] (auths.south) -- +(0,-0.5) -| (urepo.north);
+\draw[arr] (issues) -- (irepo);
+\draw[arr] (analytics) -- (srepo);
+\draw[arr] (gams) -- (obrepo);
+\draw[darr, bend right=15] (reserves.south east) to (brepo);
+\draw[darr, bend left=15] (analytics.south west) to (irepo.south east);
+\draw[arr] (irepo.south) -- +(0,-0.3) -| ([xshift=-1cm]db.north);
+\draw[arr] (srepo.south) -- +(0,-0.3) -| (db.north);
+\draw[arr] (obrepo.south) -- +(0,-0.3) -| ([xshift=1cm]db.north);
+\draw[decorate, decoration={brace, amplitude=6pt, mirror}, thick]
+([xshift=-0.2cm, yshift=-0.2cm]issuec.south west) -- ([xshift=0.2cm, yshift=-0.2cm]gamc.south east)
+node[midway, below=8pt, font=\footnotesize\bfseries] {Controller Layer};
+\draw[decorate, decoration={brace, amplitude=6pt, mirror}, thick]
+([xshift=-0.2cm, yshift=-0.2cm]issues.south west) -- ([xshift=0.2cm, yshift=-0.2cm]gams.south east)
+node[midway, below=8pt, font=\footnotesize\bfseries] {Service Layer};
+\draw[decorate, decoration={brace, amplitude=6pt, mirror}, thick]
+([xshift=-0.2cm, yshift=-0.2cm]irepo.south west) -- ([xshift=0.2cm, yshift=-0.2cm]obrepo.south east)
+node[midway, below=8pt, font=\footnotesize\bfseries] {Repository Layer};
+\end{tikzpicture}
+\end{adjustbox}
+\end{center}
+Frontend calls the backend via REST with JWT. Each controller delegates to its service, which queries repositories. Dashed arrows show cross-service repo access.
+\vspace{2cm}
+\section{Entity Relationship Integration}
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm and 2cm]
+\node[box] (user) {UserAccount};
+\node[box, below left=1.5cm and 1cm of user] (seller) {Seller};
+\node[box, below right=1.5cm and 1cm of user] (org) {Organisation};
+\node[box, below=1.5cm of seller] (bundle) {BundlePosting};
+\node[box, below=2.5cm of user] (reservation) {Reservation};
+\node[box, below left=1cm and 0.5cm of bundle] (category) {Category};
+\node[box, below right=1cm and 0.5cm of bundle] (pickup) {PickupWindow};
+\node[box, below=1.5cm of reservation] (issue) {IssueReport};
+\node[box, right=1cm of org] (badge) {Badge};
+\node[box, below=1.2cm of badge] (orgbadge) {OrgBadge};
+\node[box, below=1.2cm of orgbadge] (streak) {StreakCache};
+\draw[arr] (user) -- node[lbl, left] {1:1} (seller);
+\draw[arr] (user) -- node[lbl, right] {1:1} (org);
+\draw[arr] (seller) -- node[lbl, left] {1:N} (bundle);
+\draw[arr] (bundle) -- node[lbl, left] {1:N} (reservation);
+\draw[arr] (org) -- node[lbl, right] {1:N} (reservation);
+\draw[arr] (user) -- node[lbl, right] {1:N} (reservation);
+\draw[arr] (reservation) -- node[lbl, right] {1:N} (issue);
+\draw[arr] (org) -- node[lbl, above] {1:N} (issue);
+\draw[arr] (category) -- node[lbl, left] {1:N} (bundle);
+\draw[arr] (pickup) -- node[lbl, right] {1:N} (bundle);
+\draw[arr] (org) -- (orgbadge);
+\draw[arr] (badge) -- (orgbadge);
+\draw[arr] (org.south east) |- (streak);
+\end{tikzpicture}
+\end{center}
+UserAccount maps 1:1 to Seller or Organisation by role. Sellers create bundles; organisations reserve and file issues. OrganisationBadge is a many to many join. Category and PickupWindow are lookup tables.
+
+\section{Backend Class Breakdown}
+
+The backend for this project uses Java as its main language as it was a language we were all familiar with that required enough structure to force an organised workflow amongst the developers. We used the spring framework to manage transactions between the backend and database, making the process easily standardised.
+
+The back end is comprised of three components:
+\begin{itemize}
+\item \textbf{Container Objects} -- Each object represents a row in a database table, with attributes that store each value along the row.
+\item \textbf{Repositories} -- Methods contain SQL queries that are run on the database. The resultant tuples are converted into container objects.
+\item \textbf{Controllers} -- Interface with the frontend, providing functions that run the methods in repositories to retrieve requested data and send up to the frontend. In some cases such as forecasting, the data is operated on before results like predictions are sent instead.
+\end{itemize}
+
+These three work together to facilitate data flow between the frontend and database.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{byteme_backend_class_uml.png}
+\caption{Backend Class UML Diagram}
+\label{fig:backend_uml}
+\end{figure}
+
+\section{Database Architecture}
+
+\subsection{Deployment Architecture}
+
+The CW1 prototype is deployed using Railway, which provides a managed PostgreSQL database and application hosting environment. The system follows a standard three-layer architecture:
+
+\begin{itemize}
+\item \textbf{Frontend:} Web interface for sellers and organisations.
+\item \textbf{Backend service:} Handles authentication, role-based access control, reservation logic, and workflow transitions.
+\item \textbf{Managed PostgreSQL:} Persistent data storage and enforcement of critical business rules.
+\end{itemize}
+
+All secrets (database URLs, credentials) are configured via environment variables within Railway and are not stored in the repository. The backend is stateless, allowing Railway to manage deployment and scaling without affecting application logic.
+
+The database is intentionally responsible for enforcing key invariants, including oversell prevention, role validation, and rescue-event integrity. This design ensures correctness even if the application layer encounters unexpected input.
+
+\subsection{Data Protection and Cloud Infrastructure}
+
+The system is deployed on Railway, which runs on AWS-managed cloud infrastructure. This provides a secure, production-grade environment for both the backend service and the PostgreSQL database.
+
+Using AWS-backed infrastructure offers several data protection advantages:
+
+\begin{itemize}
+\item \textbf{Managed database hosting:} PostgreSQL is hosted in a managed environment with secure configuration, automated backups, and infrastructure-level isolation.
+\item \textbf{Encrypted connections:} Database connections use encrypted transport (TLS), protecting data in transit.
+\item \textbf{Infrastructure-level security controls:} AWS data centres provide physical security, network segmentation, and resilience measures that would not be achievable in a local deployment.
+\item \textbf{Environment-based secrets management:} Sensitive credentials (e.g., database URLs) are stored as Railway environment variables and are not committed to the repository.
+\end{itemize}
+
+At the application level, additional data protection measures include password hashing, role-based access control, and strict database constraints to prevent unauthorised or inconsistent data states.
+
+While the CW1 prototype does not process payment details or highly sensitive personal data, deploying on AWS-backed infrastructure ensures that user credentials and operational data are handled within an industry-standard cloud security environment. This supports responsible data management and reduces operational risk compared to local or unmanaged hosting.
+
+\subsection{Data Model Design}
+
+The schema is organised around the real-world flow of surplus food:
+
+\begin{enumerate}
+\item \textbf{User and Role Management} -- \texttt{UserAccount}, \texttt{Seller}, and \texttt{Organisation} define actors and enforce role constraints.
+\item \textbf{Marketplace Core} -- \texttt{BundlePosting} and \texttt{Reservation} implement the posting and reservation workflow.
+\item \textbf{Impact and Gamification} -- \texttt{OrganisationStreakCache}, \texttt{Badge}, and \texttt{OrganisationBadge} support rescue streak tracking.
+\item \textbf{Issue Handling} -- \texttt{IssueReport} enables structured feedback and resolution.
+\item \textbf{Forecasting and Analytics} -- \texttt{DemandObservation}, \texttt{ForecastRun}, \texttt{ForecastOutput}, and \texttt{SellerMetricsWeekly} store demand history, model evaluations, and seller insight metrics.
+\end{enumerate}
+
+The detailed entity attributes and relationships are documented separately in the ERD and backend entity documentation. This section focuses on architectural structure rather than attribute-level detail.
+
+\subsection{Core Workflow Implemented in CW1}
+
+The CW1 vertical slice supports:
+
+\begin{enumerate}
+\item Sellers create bundles with quantity limits and pickup windows.
+\item Organisations reserve bundles and receive a hashed claim code.
+\item Sellers verify pickup and mark reservations as collected.
+\item A rescue event records estimated meals and CO\textsubscript{2}e saved.
+\item Organisation streak data updates accordingly.
+\end{enumerate}
+
+Capacity checks are enforced transactionally in the database, guaranteeing an oversell rate of zero. Status transitions are recorded to preserve traceability and support evaluation.
+
+\subsection{Explanation}
+
+At a simple level, the system allows a seller to list surplus food and an organisation to reserve it. The database guarantees that no more bundles can be reserved than are available. When a bundle is collected, the system records the environmental impact and updates the organisation's rescue streak.
+
+Railway hosts both the backend and the managed database, ensuring that the system can be deployed, demonstrated, and tested consistently without relying on local configuration. The CW1 architecture prioritises correctness, reliability, and clear separation of concerns, forming a stable foundation for the expanded analytics and forecasting components planned for CW2.
+
+\chapter{Forecasting Plan}
+\begin{motivation}
+A summary of the forecasting techniques used within Sprint 1 of the project described within the context of the final forecasting feature's design. Covers both current and future forecasting models.
+\end{motivation}
+
+\section{Current Model: EMA-Weighted Forecasting}
+The Sprint 1 forecasting engine uses an Exponentially Weighted Moving Average (EMA) approach to predict daily reservation counts and no-show probabilities for each seller. The model assigns greater weight to recent observations, allowing it to adapt to changing demand patterns more quickly than a simple moving average. For each seller, the system aggregates historical reservation data by ISO day-of-week, applies the EMA weighting with a configurable smoothing factor, and outputs a predicted reservation count alongside a no-show probability for the upcoming period.
+
+\section{Evaluation Approach}
+All forecasts are evaluated using an 80/20 held-out split. The training window covers the earliest 80\% of a seller's historical data, while the remaining 20\% is reserved for evaluation. Three metrics are computed for each model run: Mean Absolute Error (MAE) for reservation count accuracy, Root Mean Squared Error (RMSE) to penalise large deviations, and the Brier Score for no-show probability calibration. These metrics are compared against two baselines --- a 4-week simple moving average and a seasonal naive model that repeats the same day-of-week value from prior weeks. Results are persisted in the \texttt{ForecastRun} entity so that model performance can be tracked over time.
+
+\section{Sprint 2 Forecasting Roadmap}
+In Sprint 2 we plan to introduce additional forecasting techniques for comparison, including a weighted linear regression model and a day-of-week seasonal decomposition. The system will also surface actionable recommendations to sellers, such as suggested bundle quantities for the following week, with associated confidence intervals. These enhancements will be evaluated against the same held-out methodology to ensure measurable improvement over the Sprint 1 baseline.
+
+\chapter{Success Criteria}
+
+\begin{motivation}
+This chapter outlines the key measures used to evaluate whether the Byte Me platform achieves its intended goals. The criteria focus on reliability, forecasting performance, environmental impact, usability, and user engagement. Each measure is grounded in implemented system behaviour rather than theoretical design.
+\end{motivation}
+
+\section{Marketplace Reliability}
+Reliability is the most fundamental success measure. A food rescue platform must be trusted by sellers and organisations, which means the system must reflect real-world availability accurately at all times.
+
+\subsection{Oversell Prevention}
+The platform is designed so that it is impossible for more reservations to be made than the quantity originally posted. Before a reservation is confirmed, the system verifies that the requested quantity does not exceed the remaining available stock and that the bundle is still active.
+If this condition is not satisfied, the reservation request is rejected immediately. Because this validation is enforced transactionally, overselling cannot occur even under simultaneous requests. As a result, the oversell rate is strictly zero by design rather than by assumption.
+This behaviour is directly testable and provides a measurable guarantee of marketplace integrity.
+
+\subsection{Handling Expiries and No-Shows}
+In practice, not every reserved bundle is successfully collected. The system therefore distinguishes clearly between successful collections, cancellations, no-shows, and expired listings.
+Bundles that pass their pickup window without being collected are automatically identified and marked appropriately. This prevents outdated listings from remaining visible and ensures that inventory reflects real availability.
+By explicitly modelling each possible outcome in the bundle lifecycle, the platform maintains transparency and traceability for both sellers and organisations.
+
+\section{Forecast Accuracy}
+Beyond core reliability, the platform aims to help sellers make better posting decisions using demand forecasting.
+Forecast performance is evaluated using a held-out validation approach, where historical data is split into training and evaluation sets. The chosen forecasting model is then compared against simpler baseline approaches.
+Three error metrics are used:
+
+\begin{itemize}
+\item Mean Absolute Error (MAE), measuring average prediction deviation.
+\item Root Mean Squared Error (RMSE), which penalises larger errors more heavily.
+\item Brier Score, evaluating the accuracy of no-show probability predictions.
+\end{itemize}
+By comparing the selected model against a moving average baseline and a seasonal naive benchmark, the system ensures that any improvement in predictive performance is evidence-based. Forecast results are stored and monitored over time, allowing continuous evaluation rather than one-off validation.
+
+\section{Waste Impact and Carbon Reduction}
+
+The environmental objective of Byte Me is measurable reduction in food waste.
+For each successfully collected bundle, the system calculates the estimated weight of food diverted from landfill. This is derived from the seller’s estimated bundle weight and the number of completed collections.
+Using established food waste conversion factors, the platform can also estimate associated CO\textsubscript{2}e savings. These impact metrics are aggregated weekly and displayed on the seller dashboard, providing tangible evidence of environmental contribution.
+This ensures that sustainability claims are supported by quantifiable system data rather than general statements.
+
+\section{User Experience}
+A rescue platform must operate efficiently in retail environments where speed matters.
+Reservation confirmation and collection verification are designed to occur instantly. Claim codes are generated at the time of reservation and securely validated during pickup. The process is intentionally simple for staff while maintaining appropriate security safeguards.
+The success measure here is responsiveness and clarity: users should be able to reserve and complete collections without friction or delay.
+
+\section{Engagement and Gamification}
+Long-term impact depends on continued participation. The system therefore tracks organisational rescue streaks and awards milestone badges based on consistent activity.
+Streak updates and badge eligibility checks occur automatically after successful collections. This provides immediate positive reinforcement and encourages repeated engagement.
+By linking measurable environmental impact with visible milestones, the platform supports sustained user motivation.
+
+\section*{Summary in Plain Terms}
+In simple terms, the system is considered successful if it never oversells food, keeps listings accurate, predicts demand better than basic averages, clearly measures how much waste is saved, works quickly for users, and encourages organisations to keep participating. Each of these goals is supported by implemented logic and measurable data, meaning the platform’s performance can be evaluated objectively rather than assumed.
+
+\chapter{Sprint 2 Plan}
+\begin{motivation}
+Features we intend to implement in the second development phase of Byte Me and their timelines.
+\end{motivation}
+
+\section{Planned Features}
+Sprint 2 (Feb 19 -- Mar 26) targets the following deliverables, grouped by priority:
+
+\subsection{Weeks 1--2: Core Enhancements}
+\begin{itemize}
+\item \textbf{Expanded analytics suite} -- additional seller dashboard views covering pricing effectiveness, weekly sell-through trends, and waste reduction over time.
+\item \textbf{Improved forecasting models} -- introduce weighted linear regression and seasonal decomposition alongside the existing EMA model, with confidence intervals surfaced to sellers.
+\item \textbf{Issue reporting workflow} -- allow organisations to flag problems with reservations and sellers to respond, with full audit trail.
+\end{itemize}
+
+\subsection{Weeks 3--4: Governance and Polish}
+\begin{itemize}
+\item \textbf{UX and accessibility refinement} -- formal WCAG audit, keyboard navigation improvements, and colour contrast fixes.
+\item \textbf{Expanded policy documentation} -- finalise Terms of Service, update privacy policy, and align cookies notice with the deployed system.
+\item \textbf{Maintainer and admin tooling} -- seed data management scripts and deployment documentation for client handover.
+\end{itemize}
+
+\subsection{Week 5: Final Integration and Handover}
+\begin{itemize}
+\item \textbf{Client handover pack} -- deployment guide, environment variable reference, database migration steps, and admin credentials.
+\item \textbf{Final testing and documentation} -- expanded automated test coverage, updated manual test plan with failure cases, and final report.
+\end{itemize}
+
+\bibliographystyle{acm}
+\bibliography{1ref/1ref}
+\end{document}
