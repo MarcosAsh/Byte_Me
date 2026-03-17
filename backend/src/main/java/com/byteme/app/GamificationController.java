@@ -102,6 +102,7 @@ public class GamificationController {
     private void checkAndAwardBadges(UUID orgId) {
         var existingBadges = orgBadgeRepo.findByOrgId(orgId);
         var earnedCodes = existingBadges.stream()
+                .filter(ob -> ob.getBadge() != null)
                 .map(ob -> ob.getBadge().getCode())
                 .collect(java.util.stream.Collectors.toSet());
 
