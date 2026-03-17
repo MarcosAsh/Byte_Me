@@ -159,7 +159,7 @@ export default function SellerDashboardPage() {
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: { name: string; percent?: number }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                 >
                   <Cell fill="#16a34a" />
                   <Cell fill="#dc2626" />
