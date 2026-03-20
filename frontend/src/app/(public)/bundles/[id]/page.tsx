@@ -90,10 +90,10 @@ export default function BundleDetailPage() {
           {bundle.description && <p className="bundle-detail-description">{bundle.description}</p>}
 
           <div className="bundle-detail-pricing">
-            <span className="bundle-detail-price">${formatPrice(discountedCents)}</span>
+            <span className="bundle-detail-price">£{formatPrice(discountedCents)}</span>
             {bundle.discountPct > 0 && (
               <>
-                <span className="bundle-detail-original"> | Was ${formatPrice(bundle.priceCents)}</span>
+                <span className="bundle-detail-original"> | Was £{formatPrice(bundle.priceCents)}</span>
                 <span className="badge badge-success">Save {bundle.discountPct}%</span>
               </>
             )}

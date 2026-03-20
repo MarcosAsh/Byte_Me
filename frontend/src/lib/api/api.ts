@@ -189,7 +189,7 @@ export const issuesApi = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  create: (data: { orderId?: string; orgId: string; type: 'UNAVAILABLE' | 'QUALITY' | 'OTHER'; description: string }, token: string) =>
+  create: (data: { reservationId?: string; orgId: string; type: 'UNAVAILABLE' | 'QUALITY' | 'OTHER'; description: string }, token: string) =>
     fetchApi('/issues', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -250,6 +250,18 @@ export const forecastApi = {
 
   evaluate: (sellerId: string, token: string) =>
     fetchApi(`/forecast/evaluate/${sellerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  recordAction: (sellerId: string, data: { actionType: string; notes?: string; postingId?: string }, token: string) =>
+    fetchApi(`/forecast/actions/${sellerId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  actions: (sellerId: string, token: string) =>
+    fetchApi(`/forecast/actions/${sellerId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }),
 };

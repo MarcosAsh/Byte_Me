@@ -87,21 +87,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. LIVE STATS (We need to integrate with analytics)  */}
+      {/* 3. WHY IT MATTERS */}
       <section className = "mb-16">
         <div className = "card bg-green-50 border-green-200">
           <div className = "grid grid-3 text-center">
             <div>
-              <div className = "text-3xl font-bold text-green-600">placeholder</div>
-              <div className = "text-muted">Food Saved</div>
+              <div className = "text-3xl font-bold text-green-600">Reduce Waste</div>
+              <div className = "text-muted">Rescue surplus food before it goes to landfill</div>
             </div>
             <div>
-              <div className = "text-3xl font-bold text-green-600">placeholder</div>
-              <div className = "text-muted">CO2 Emissions Prevented</div>
+              <div className = "text-3xl font-bold text-green-600">Cut CO2</div>
+              <div className = "text-muted">Every rescued bundle avoids greenhouse gas emissions</div>
             </div>
             <div>
-              <div className = "text-3xl font-bold text-green-600">placeholder</div>
-              <div className = "text-muted">Money Saved</div>
+              <div className = "text-3xl font-bold text-green-600">Save Money</div>
+              <div className = "text-muted">Get quality food at a fraction of the original price</div>
             </div>
           </div>
         </div>

@@ -230,6 +230,14 @@ export interface RecommendationResponse {
   recommendation: string;
 }
 
+export interface ForecastActionResponse {
+  actionId: string;
+  actionType: string;
+  notes: string;
+  postingTitle: string;
+  createdAt: string;
+}
+
 export interface WeeklyMetricsResponse {
   weekStart: string;
   postedCount: number;

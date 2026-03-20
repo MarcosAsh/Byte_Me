@@ -4,8 +4,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 // Gamification controller
@@ -62,13 +65,17 @@ public class GamificationController {
         ));
     }
 
-    // Get org stats
+    // Get org stats (also checks and awards any new badges)
     @GetMapping("/stats/{orgId}")
+    @Transactional
     public ResponseEntity<?> getStats(@PathVariable UUID orgId) {
         var org = orgRepo.findById(orgId).orElse(null);
         if (org == null) return ResponseEntity.notFound().build();
         var denied = checkOrgOwnership(org);
         if (denied != null) return denied;
+
+        // Check and award variety badges
+        checkAndAwardBadges(orgId);
 
         // Calculate stats
         var streak = streakRepo.findById(orgId).orElse(null);
@@ -89,6 +96,42 @@ public class GamificationController {
                 mealsRescued,
                 co2eSavedGrams
         ));
+    }
+
+    // Check variety conditions and award badges if earned
+    private void checkAndAwardBadges(UUID orgId) {
+        var existingBadges = orgBadgeRepo.findByOrgId(orgId);
+        var earnedCodes = existingBadges.stream()
+                .filter(ob -> ob.getBadge() != null)
+                .map(ob -> ob.getBadge().getCode())
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Variety badges: rescued from 3+ distinct sellers
+        if (!earnedCodes.contains("VARIETY_SELLERS")) {
+            long distinctSellers = reservationRepo.countDistinctSellersByOrgId(orgId);
+            if (distinctSellers >= 3) {
+                awardBadge(orgId, "VARIETY_SELLERS");
+            }
+        }
+
+        // Variety badges: rescued from 3+ distinct categories
+        if (!earnedCodes.contains("VARIETY_CATEGORIES")) {
+            long distinctCategories = reservationRepo.countDistinctCategoriesByOrgId(orgId);
+            if (distinctCategories >= 3) {
+                awardBadge(orgId, "VARIETY_CATEGORIES");
+            }
+        }
+    }
+
+    // Award a badge by code
+    private void awardBadge(UUID orgId, String badgeCode) {
+        var badge = badgeRepo.findByCode(badgeCode).orElse(null);
+        if (badge == null) return;
+
+        OrganisationBadge ob = new OrganisationBadge();
+        ob.setOrgId(orgId);
+        ob.setBadgeId(badge.getBadgeId());
+        orgBadgeRepo.save(ob);
     }
 
     // Get org badges

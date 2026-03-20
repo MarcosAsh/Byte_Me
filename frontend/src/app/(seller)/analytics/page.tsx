@@ -9,6 +9,7 @@ import type {
   ForecastOutputResponse,
   ForecastRunResponse,
   RecommendationResponse,
+  ForecastActionResponse,
 } from "@/lib/api/types";
 import {
   LineChart,
@@ -27,9 +28,12 @@ export default function SellerAnalyticsPage() {
   const [forecasts, setForecasts] = useState<ForecastOutputResponse[]>([]);
   const [runs, setRuns] = useState<ForecastRunResponse[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationResponse[]>([]);
+  const [actions, setActions] = useState<ForecastActionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
+  const [actionForm, setActionForm] = useState({ postingId: "", actionType: "", notes: "" });
+  const [submittingAction, setSubmittingAction] = useState(false);
 
   const sellerId = user?.profileId;
   const token = user?.token;
@@ -49,6 +53,12 @@ export default function SellerAnalyticsPage() {
       setForecasts(f);
       setRuns(c);
       setRecommendations(r);
+      try {
+        const a = await forecastApi.actions(sellerId, token);
+        setActions(a);
+      } catch {
+        // Actions log is non-critical
+      }
     } catch {
       setError("Failed to load forecast data.");
     } finally {
@@ -320,6 +330,126 @@ export default function SellerAnalyticsPage() {
                 </details>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Record Action from Forecast */}
+      <div className="card mb-6">
+        <h2 className="text-xl font-semibold mb-4">Record Action Taken</h2>
+        <p style={{ fontSize: "0.9rem", color: "var(--color-muted)", marginBottom: "1rem" }}>
+          Log what you changed based on the forecast recommendations above.
+        </p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!sellerId || !token || !actionForm.actionType) return;
+            setSubmittingAction(true);
+            try {
+              await forecastApi.recordAction(sellerId, {
+                actionType: actionForm.actionType,
+                notes: actionForm.notes || undefined,
+                postingId: actionForm.postingId || undefined,
+              }, token);
+              setActionForm({ postingId: "", actionType: "", notes: "" });
+              const updated = await forecastApi.actions(sellerId, token);
+              setActions(updated);
+            } catch {
+              setError("Failed to record action.");
+            } finally {
+              setSubmittingAction(false);
+            }
+          }}
+          style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+        >
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <select
+              value={actionForm.actionType}
+              onChange={(e) => setActionForm({ ...actionForm, actionType: e.target.value })}
+              required
+              className="input"
+              style={{ flex: 1, minWidth: "200px" }}
+              aria-label="Action type"
+            >
+              <option value="">Select action type...</option>
+              <option value="REDUCED_QUANTITY">Reduced quantity</option>
+              <option value="INCREASED_QUANTITY">Increased quantity</option>
+              <option value="ADJUSTED_DISCOUNT">Adjusted discount</option>
+              <option value="CHANGED_WINDOW">Changed pickup window</option>
+              <option value="CHANGED_CATEGORY">Changed category</option>
+              <option value="PAUSED_POSTING">Paused posting</option>
+              <option value="OTHER">Other</option>
+            </select>
+            {recommendations.length > 0 && (
+              <select
+                value={actionForm.postingId}
+                onChange={(e) => setActionForm({ ...actionForm, postingId: e.target.value })}
+                className="input"
+                style={{ flex: 1, minWidth: "200px" }}
+                aria-label="Related posting"
+              >
+                <option value="">Related posting (optional)</option>
+                {recommendations.map((r) => (
+                  <option key={r.postingId} value={r.postingId}>{r.postingTitle}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <textarea
+            value={actionForm.notes}
+            onChange={(e) => setActionForm({ ...actionForm, notes: e.target.value })}
+            placeholder="Describe what you changed and why..."
+            className="input"
+            rows={2}
+            style={{ resize: "vertical" }}
+            aria-label="Action notes"
+          />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={submittingAction || !actionForm.actionType}
+            style={{ alignSelf: "flex-start" }}
+          >
+            {submittingAction ? "Saving..." : "Record Action"}
+          </button>
+        </form>
+      </div>
+
+      {/* Action Log */}
+      <div className="card mb-6">
+        <h2 className="text-xl font-semibold mb-4">Action Log</h2>
+        {actions.length === 0 ? (
+          <p className="text-muted text-center py-8">
+            No actions recorded yet. Use the form above to log changes you made based on forecasts.
+          </p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+                  <th style={{ textAlign: "left", padding: "8px 12px" }}>Date</th>
+                  <th style={{ textAlign: "left", padding: "8px 12px" }}>Action</th>
+                  <th style={{ textAlign: "left", padding: "8px 12px" }}>Posting</th>
+                  <th style={{ textAlign: "left", padding: "8px 12px" }}>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {actions.map((a) => (
+                  <tr key={a.actionId} style={{ borderBottom: "1px solid var(--color-border)" }}>
+                    <td style={{ padding: "8px 12px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                      {new Date(a.createdAt).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: "8px 12px" }}>
+                      {a.actionType.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase())}
+                    </td>
+                    <td style={{ padding: "8px 12px", color: a.postingTitle ? "inherit" : "var(--color-muted)" }}>
+                      {a.postingTitle || "General"}
+                    </td>
+                    <td style={{ padding: "8px 12px", fontSize: "0.9rem" }}>{a.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

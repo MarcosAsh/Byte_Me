@@ -18,6 +18,7 @@ public class ForecastController {
     private final SellerMetricsWeeklyRepository metricsRepo;
     private final SellerRepository sellerRepo;
     private final BundlePostingRepository bundleRepo;
+    private final ForecastActionRepository actionRepo;
 
     public ForecastController(ForecastService forecastService,
                               DemandObservationRepository observationRepo,
@@ -25,7 +26,8 @@ public class ForecastController {
                               ForecastOutputRepository outputRepo,
                               SellerMetricsWeeklyRepository metricsRepo,
                               SellerRepository sellerRepo,
-                              BundlePostingRepository bundleRepo) {
+                              BundlePostingRepository bundleRepo,
+                              ForecastActionRepository actionRepo) {
         this.forecastService = forecastService;
         this.observationRepo = observationRepo;
         this.runRepo = runRepo;
@@ -33,6 +35,7 @@ public class ForecastController {
         this.metricsRepo = metricsRepo;
         this.sellerRepo = sellerRepo;
         this.bundleRepo = bundleRepo;
+        this.actionRepo = actionRepo;
     }
 
     // Check that the current user owns this seller profile
@@ -177,6 +180,65 @@ public class ForecastController {
         if (denied != null) return denied;
 
         var result = forecastService.runForecast(sellerId);
+        return ResponseEntity.ok(result);
+    }
+
+    // Record an action taken based on a forecast recommendation
+    @PostMapping("/actions/{sellerId}")
+    public ResponseEntity<?> recordAction(@PathVariable UUID sellerId, @RequestBody Map<String, String> body) {
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
+
+        String actionType = body.get("actionType");
+        if (actionType == null || actionType.isBlank()) {
+            return ResponseEntity.badRequest().body("actionType is required");
+        }
+
+        ForecastAction action = new ForecastAction();
+        action.setSeller(seller);
+        action.setActionType(actionType);
+        action.setNotes(body.get("notes"));
+
+        String postingId = body.get("postingId");
+        if (postingId != null && !postingId.isBlank()) {
+            var posting = bundleRepo.findById(UUID.fromString(postingId)).orElse(null);
+            if (posting != null) {
+                action.setPosting(posting);
+            }
+        }
+
+        actionRepo.save(action);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("actionId", action.getActionId());
+        result.put("actionType", action.getActionType());
+        result.put("notes", action.getNotes() != null ? action.getNotes() : "");
+        result.put("postingTitle", action.getPosting() != null ? action.getPosting().getTitle() : "");
+        result.put("createdAt", action.getCreatedAt().toString());
+        return ResponseEntity.ok(result);
+    }
+
+    // Get recorded forecast actions for a seller
+    @GetMapping("/actions/{sellerId}")
+    public ResponseEntity<?> getActions(@PathVariable UUID sellerId) {
+        var seller = sellerRepo.findById(sellerId).orElse(null);
+        if (seller == null) return ResponseEntity.notFound().build();
+        var denied = checkSellerOwnership(seller);
+        if (denied != null) return denied;
+
+        var actions = actionRepo.findBySellerSellerIdOrderByCreatedAtDesc(sellerId);
+        var result = actions.stream().map(a -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("actionId", a.getActionId());
+            map.put("actionType", a.getActionType());
+            map.put("notes", a.getNotes() != null ? a.getNotes() : "");
+            map.put("postingTitle", a.getPosting() != null ? a.getPosting().getTitle() : "");
+            map.put("createdAt", a.getCreatedAt().toString());
+            return map;
+        }).collect(Collectors.toList());
+
         return ResponseEntity.ok(result);
     }
 

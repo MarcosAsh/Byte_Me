@@ -14,8 +14,9 @@ export default function Header() {
   const isOrgAdmin = user?.role === "ORG_ADMIN";
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-[var(--border)]">
-      <nav className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white border-b border-[var(--border)]" role="banner">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <nav className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="w-10 h-10 bg-[var(--primary)] rounded-lg flex items-center justify-center text-white font-bold">

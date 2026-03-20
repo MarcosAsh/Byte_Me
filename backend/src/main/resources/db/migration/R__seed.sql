@@ -29,7 +29,9 @@ ON CONFLICT (label) DO NOTHING;
 INSERT INTO badge (badge_id, code, name, description) VALUES
   ('b1111111-1111-1111-1111-111111111111', 'FIRST_RESCUE', 'First Rescue', 'Completed your first collection.'),
   ('b2222222-2222-2222-2222-222222222222', 'STREAK_4', '4 Week Streak', 'Collected at least once per week for 4 weeks.'),
-  ('b3333333-3333-3333-3333-333333333333', 'CO2_SAVER', 'CO2 Saver', 'Hit a milestone of CO2e saved.')
+  ('b3333333-3333-3333-3333-333333333333', 'CO2_SAVER', 'CO2 Saver', 'Hit a milestone of CO2e saved.'),
+  ('b4444444-4444-4444-4444-444444444444', 'VARIETY_SELLERS', 'Explorer', 'Rescued from 3 or more different sellers.'),
+  ('b5555555-5555-5555-5555-555555555555', 'VARIETY_CATEGORIES', 'Diverse Rescuer', 'Rescued from 3 or more different food categories.')
 ON CONFLICT (code) DO NOTHING;
 
 -- 2) User accounts (password = "password123" bcrypt hashed)
@@ -148,7 +150,9 @@ INSERT INTO bundle_posting (
    date_trunc('week', now()) + interval '11 days' + time '17:00',
    date_trunc('week', now()) + interval '11 days' + time '18:00',
    8, 0, 300, 10, 1500, 'DRAFT')
-ON CONFLICT (posting_id) DO NOTHING;
+ON CONFLICT (posting_id) DO UPDATE SET
+  pickup_start_at = EXCLUDED.pickup_start_at,
+  pickup_end_at = EXCLUDED.pickup_end_at;
 
 -- 4B) Bad posting seeds
 
@@ -284,7 +288,9 @@ INSERT INTO bundle_posting (
   date_trunc('week', now()) + interval '12 days' + time '18:00',
   1, 150, 10, 'ACTIVE'
 )
-ON CONFLICT (posting_id) DO NOTHING;
+ON CONFLICT (posting_id) DO UPDATE SET
+  pickup_start_at = EXCLUDED.pickup_start_at,
+  pickup_end_at = EXCLUDED.pickup_end_at;
 
 INSERT INTO reservation (
   reservation_id, posting_id, org_id, reserved_by_user_id,
@@ -485,6 +491,19 @@ INSERT INTO seller_metrics_weekly (
   ('80000000-0000-0000-0000-000000000002', date_trunc('week', now())::date - 14, 3, 30, 24, 4, 2, 0.80, 21000),
   ('80000000-0000-0000-0000-000000000002', date_trunc('week', now())::date - 7,  3, 33, 27, 3, 3, 0.82, 22500)
 ON CONFLICT DO NOTHING;
+
+-- 9) Forecast actions (sellers recording what they did based on recommendations)
+
+INSERT INTO forecast_action (action_id, seller_id, posting_id, action_type, notes, created_at) VALUES
+  ('fc000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001',
+   'REDUCED_QUANTITY', 'Reduced bakery bundle from 18 to 12 based on demand forecast', NOW() - INTERVAL '5 days'),
+  ('fc000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002',
+   'ADJUSTED_DISCOUNT', 'Increased discount from 30% to 40% on hot meals to improve sell-through', NOW() - INTERVAL '3 days'),
+  ('fc000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000001', NULL,
+   'CHANGED_WINDOW', 'Shifted produce bundles from morning to lunch window after seeing higher demand', NOW() - INTERVAL '1 day'),
+  ('fc000000-0000-0000-0000-000000000004', '80000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000005',
+   'REDUCED_QUANTITY', 'Cut sandwich posting from 15 to 10 per forecast recommendation', NOW() - INTERVAL '2 days')
+ON CONFLICT (action_id) DO NOTHING;
 
 -- Bulk data to fill out the platform with realistic volume
 INSERT INTO category (category_id, name) VALUES
