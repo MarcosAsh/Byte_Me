@@ -189,6 +189,7 @@ function ReservationCard({
   const [issueDesc, setIssueDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [reported, setReported] = useState(false);
+  const [reportError, setReportError] = useState("");
 
   const pickupStart = new Date(r.pickupStartAt);
   const pickupEnd = new Date(r.pickupEndAt);
@@ -198,13 +199,14 @@ function ReservationCard({
   async function handleReport() {
     if (!orgId || !token || !issueDesc.trim()) return;
     setSubmitting(true);
+    setReportError("");
     try {
       await issuesApi.create({ reservationId: r.reservationId, orgId, type: issueType, description: issueDesc }, token);
       setReported(true);
       setShowReport(false);
       setIssueDesc("");
     } catch {
-      // silently fail
+      setReportError("Failed to submit issue report. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -311,6 +313,7 @@ function ReservationCard({
       )}
       {showReport && (
         <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {reportError && <div className="alert alert-error" role="alert">{reportError}</div>}
           <select
             value={issueType}
             onChange={(e) => setIssueType(e.target.value as "UNAVAILABLE" | "QUALITY" | "OTHER")}
@@ -365,10 +368,10 @@ function PickupReminders({ reservations }: { reservations: OrgReservation[] }) {
       style={{
         padding: "0.75rem 1rem",
         borderRadius: "0.5rem",
-        border: "1px solid #93c5fd",
-        backgroundColor: "#eff6ff",
+        border: "1px solid var(--color-info)",
+        backgroundColor: "var(--status-reserved-bg)",
         marginBottom: "1rem",
-        color: "#1e40af",
+        color: "var(--status-reserved-text)",
       }}
     >
       <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>

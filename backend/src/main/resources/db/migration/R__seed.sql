@@ -547,8 +547,8 @@ DECLARE
   v_org_id UUID;
 BEGIN
   FOR i IN 1..23 LOOP
-    v_user_id := gen_random_uuid();
-    v_seller_id := gen_random_uuid();
+    v_user_id := md5('seed-seller-user-' || i)::uuid;
+    v_seller_id := md5('seed-seller-' || i)::uuid;
 
     INSERT INTO user_account (user_id, email, password_hash, role)
     VALUES (v_user_id, 'seller' || (i + 2) || '@byteme.test',
@@ -564,8 +564,8 @@ BEGIN
   END LOOP;
 
   FOR i IN 1..6 LOOP
-    v_user_id := gen_random_uuid();
-    v_org_id := gen_random_uuid();
+    v_user_id := md5('seed-org-user-' || i)::uuid;
+    v_org_id := md5('seed-org-' || i)::uuid;
 
     INSERT INTO user_account (user_id, email, password_hash, role)
     VALUES (v_user_id, 'org' || (i + 2) || '@byteme.test',
@@ -623,7 +623,7 @@ BEGIN
   -- 10 postings per seller
   FOR i IN 1..array_length(v_sellers, 1) LOOP
     FOR j IN 1..10 LOOP
-      v_posting_id := gen_random_uuid();
+      v_posting_id := md5('seed-posting-' || i || '-' || j)::uuid;
 
       INSERT INTO bundle_posting (
         posting_id, seller_id, category_id, window_id,
@@ -655,7 +655,7 @@ BEGIN
 
   -- Reservations with a mix of statuses
   FOR i IN 1..400 LOOP
-    v_reservation_id := gen_random_uuid();
+    v_reservation_id := md5('seed-reservation-' || i)::uuid;
 
     IF i <= 200 THEN v_status := 'COLLECTED';
     ELSIF i <= 280 THEN v_status := 'NO_SHOW';
@@ -684,7 +684,7 @@ BEGIN
 
     IF v_status = 'COLLECTED' THEN
       INSERT INTO rescue_event (event_id, org_id, reservation_id, collected_at, meals_estimate, co2e_estimate_grams)
-      VALUES (gen_random_uuid(), v_orgs[1 + (i % array_length(v_orgs, 1))], v_reservation_id,
+      VALUES (md5('seed-rescue-' || i)::uuid, v_orgs[1 + (i % array_length(v_orgs, 1))], v_reservation_id,
               now() - ((399 - i) || ' hours')::interval, 3 + (i % 10), 1200 + (i % 5) * 400)
       ON CONFLICT DO NOTHING;
     END IF;
@@ -698,7 +698,7 @@ BEGIN
       seller_response,
       created_at, resolved_at
     ) VALUES (
-      gen_random_uuid(),
+      md5('seed-issue-' || i)::uuid,
       v_orgs[1 + (i % array_length(v_orgs, 1))],
       CASE (i % 3) WHEN 0 THEN 'QUALITY' WHEN 1 THEN 'UNAVAILABLE' ELSE 'OTHER' END,
       CASE (i % 5)
