@@ -43,7 +43,7 @@ Byte Me is a full-stack web application where food sellers list surplus bundles 
 | Backend | Java 17, Spring Boot 3.2, Spring Security, Spring Data JPA |
 | Database | PostgreSQL with Flyway migrations |
 | Auth | JWT tokens with role-based access (Seller / Org Admin) |
-| CI | GitHub Actions (backend tests + frontend build) |
+| CI | GitHub Actions (backend tests + frontend build + frontend tests) |
 
 ---
 
@@ -112,25 +112,59 @@ cd scripts; .\setup-windows.ps1
 ```
 
 ---
-### 3) Run the whole test 
-```bash 
-cd backend
-mvn clean test 
-```
 
-** Maven will output the results to the terminal. Detailed reports can be found in: target/surefire-reports/
+## Running Tests
 
-### 4) Run specific test class
+### Backend Tests
+
+Run all backend tests:
+
 ```bash
-cd backend  
-mvn test -Dtest=AnytestInsideOfTestfiles
+cd backend
+mvn clean test
 ```
 
-### 5) Run specific test method
-```bash 
-cd backend 
+Maven will output the results to the terminal. Detailed reports can be found in `target/surefire-reports/`.
+
+Run a specific test class:
+
+```bash
+cd backend
+mvn test -Dtest=IssueControllerTest
+```
+
+Run a specific test method:
+
+```bash
+cd backend
 mvn test -Dtest=BundleControllerTest#testGetById_Success
 ```
+
+### Frontend Tests
+
+The frontend uses Vitest with React Testing Library (191 tests across 13 test files).
+
+Install test dependencies (first time only):
+
+```bash
+cd frontend
+npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/user-event @testing-library/jest-dom jsdom
+```
+
+Run all frontend tests:
+
+```bash
+cd frontend
+npx vitest run
+```
+
+Run a specific test file:
+
+```bash
+npx vitest run login
+```
+
+---
 
 ## Project Structure
 
@@ -142,6 +176,7 @@ Byte_Me/
     src/test/java/     Unit tests (JUnit 5, Mockito, MockMvc)
   frontend/            Next.js app
     src/app/           Pages grouped by role: (public), (seller), (org)
+    src/app/(testing)/ Vitest test files
     src/components/    Shared UI components
     src/lib/api/       API client and TypeScript types
     src/store/         Zustand auth store

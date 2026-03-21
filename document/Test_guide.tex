@@ -1,0 +1,92 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\geometry{margin=1in}
+
+% Code block style
+\lstset{
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    tabsize=2
+}
+
+\title{Automated Test Execution Guide}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Step 4 – Run Automated Tests}
+
+Markers can run the automated tests for both the backend and frontend using the commands below.
+
+\subsection{Run Backend Tests}
+
+From the project root:
+
+\begin{lstlisting}
+cd backend
+mvn test
+\end{lstlisting}
+
+This will execute all unit and integration tests using the Maven Surefire plugin.
+Expected output will end with something similar to:
+
+\begin{lstlisting}
+BUILD SUCCESS
+\end{lstlisting}
+
+If any tests fail, Maven will display the failing test names and stack traces.
+
+\subsection{Run a Specific Backend Test Class}
+
+Markers can also run a single test class:
+
+\begin{lstlisting}
+mvn -Dtest=IssueControllerTest test
+\end{lstlisting}
+
+\subsection{Run Frontend Tests}
+
+The frontend uses Vitest with React Testing Library. Tests cover all major pages including
+authentication, bundle browsing, seller dashboard, analytics, insights, issues, org
+reservations, and gamification (191 tests across 13 test files).
+
+Install dependencies (first time only):
+
+\begin{lstlisting}
+cd frontend
+npm install -D vitest @vitejs/plugin-react @testing-library/react \
+  @testing-library/user-event @testing-library/jest-dom jsdom
+\end{lstlisting}
+
+Run all frontend tests:
+
+\begin{lstlisting}
+cd frontend
+npx vitest run
+\end{lstlisting}
+
+All tests should pass. Expected output will end with something similar to:
+
+\begin{lstlisting}
+Test Files  13 passed (13)
+     Tests  191 passed (191)
+\end{lstlisting}
+
+If any tests fail, Vitest will display the failing test names and error messages.
+
+\subsection{Run a Specific Frontend Test File}
+
+Markers can also run tests for a single page or feature:
+
+\begin{lstlisting}
+npx vitest run login
+\end{lstlisting}
+
+\end{document}
