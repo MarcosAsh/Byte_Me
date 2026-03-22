@@ -45,7 +45,7 @@ Security is our top priority. By testing the JWT system, we make sure that only 
 \textbf{What was done:} 
 \begin{itemize}
     \item Simulated successful order creation and stock reservation.
-    \item Tested edge cases, specifically preventing orders when stock is insufficient.
+    \item Tested edge cases, specifically prevent orders when stock is insufficient.
     \item Verified the full lifecycle of an order: \texttt{RESERVED} $\rightarrow$ \texttt{COLLECTED} or \texttt{RESERVED} $\rightarrow$ \texttt{CANCELLED}.
 \end{itemize}
 
@@ -128,7 +128,7 @@ We use a streak system to encourage users to keep donating and rescuing food. Te
 \end{itemize}
 
 \noindent \textbf{Justification:}
-Trust is key to a successful marketplace. If there is a problem with an order, we need a reliable way to track and fix it. These tests ensure that every complaint is recorded and that there is a clear "paper trail" showing when and how a problem was solved.
+Trust is the key to a successful marketplace. If there is a problem with an order, we need a reliable way to track and fix it. These tests ensure that every complaint is recorded and that there is a clear "paper trail" showing when and how a problem was solved.
 
 \begin{figure}[H]
     \centering
@@ -159,40 +159,116 @@ Entities are the basic building blocks of our app. We test them to make sure the
     \caption{Entity Validation: Ensuring structural integrity of core Domain Objects}
 \end{figure}
 
-% --- Section 8: Manual Testing Video Evidence ---
-\section{Manual User Acceptance Testing (Video Evidence)}
 
-\textbf{Overview:} 
-To complement our automated suite, we performed a  end-to-end manual walkthrough. This recording demonstrates the live synchronization between the Seller and Organization (Consumer) roles, confirming the full cycle of a food bundle from creation to collection.
+% --- Section 8: Frontend UI & Component Testing ---
+\section{Frontend UI \& Component Testing (Vitest / React Testing Library)}
+\textbf{What was done:} 
+\begin{itemize}
+    \item \textbf{Feature-Specific Validation:} Executed 191 automated tests across 13 core modules, including \texttt{Seller Dashboard}, \texttt{Organization Gamification}, and \texttt{Bundle Management}.
+    \item \textbf{User Flow Simulation:} Verified complex user interactions such as \texttt{create-bundle} workflows and \texttt{seller-analytics} data visualization.
+    \item \textbf{Authentication \& Registration:} Tested the integrity of the \texttt{login} and \texttt{register} components, ensuring proper validation and secure redirection.
+    \item \textbf{Role-Based Logic:} Validated unique views for both \texttt{Seller} and \texttt{Organization} roles, ensuring data isolation and relevant dashboard metrics.
+\end{itemize}
 
 \noindent \textbf{Justification:}
-This video acts as a comprehensive "walkthrough" of the most critical user path for our application. By recording this manual session, we prove that the integration between the frontend UI and the Spring Boot backend is seamless and that the database correctly handles transactional changes (like stock reservation) in a live environment.
+The frontend is the primary touchpoint for our users. By running a comprehensive suite of 191 tests, we ensure that the UI behaves predictably across different devices and user roles. This prevents "regression bugs" and guarantees that the environmental impact data and gamification badges are displayed accurately.
 
-\subsection*{Walkthrough Key Actions \& Timestamps}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Frontend Test screenshot.png}
+    \caption{Frontend Test Execution: 191 Passed Tests across 13 Suites}
+\end{figure}
+
+
+% --- Section 9: Manual Testing & Video Evidence ---
+\newpage
+\section{Manual End-to-End Testing}
+
+\textbf{Requirement:} This section provides explicit evidence of manual testing, including failure cases and edge cases.
+
+% Case 1
+\subsection{TC-01: Failure Case - Invalid Authentication}
+\textbf{Scenario:} User attempts to log in with a valid email but an incorrect password. \\
+\textbf{Expected Result:} The system identifies the mismatch and displays an "Invalid credentials" error message. \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{invaild login.png}
+    \caption{UI Evidence: Authentication failure feedback.}
+\end{figure}
+
+% Case 2
+
+\subsection{TC-02: Failure Case - Negative Value Input Validation}
+\textbf{Scenario:} Seller attempts to set a negative price (-10) during bundle creation. \\
+\textbf{Expected Result:} The UI prevents the form submission and displays a validation tooltip. \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{Can not eneter invaild numbers.png}
+    \caption{UI Evidence: Frontend validation for numeric constraints.}
+\end{figure}
+
+% Case 3 
+\subsection{TC-03: Failure Case - Race Condition (Concurrent Reservation)}
+\textbf{Scenario:} Two users attempt to reserve the final available bundle simultaneously. User A's request processes milliseconds earlier. \\
+\textbf{Expected Result:} The system must maintain strict inventory integrity. While the first user succeeds, the second user (User B) must receive a "No bundles available" error, preventing a negative stock balance. \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{No bundle avaliable after one person reserve it first.png}
+    \caption{UI Evidence: Real-time inventory check preventing overselling after a concurrent claim.}
+\end{figure}
+
+% Case 5
+\subsection{TC-05: Edge Case - Reservation Cancellation}
+\textbf{Scenario:} User clicks the 'Cancel' button on an active reservation. \\
+\textbf{Expected Result:} A browser modal confirms the action to prevent accidental data loss. \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{cancel the reserve.png}
+    \caption{UI Evidence: Safety modal for state-changing actions.}
+\end{figure}
+
+% Case 6
+\subsection{TC-06: State Integrity - Sold Out Logic}
+\textbf{Scenario:} A bundle reaches 0 availability. \\
+\textbf{Expected Result:} The bundle details page replaces the action button with a "Sold Out" status. \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{Sold Out Bundle.png}
+    \caption{UI Evidence: Automated status update based on inventory.}
+\end{figure}
+
+
+\subsection{Manual User Acceptance Testing (Happy Case Video Evidence)}
+\textbf{Overview:} 
+To complement our automated suite, we performed an end-to-end manual walkthrough of the system's \textbf{Happy Path} (the ideal user journey where no errors occur). This recording demonstrates the successful live synchronization between the Seller and Organization (Consumer) roles, confirming the full cycle of a food bundle from creation to collection.
+
+\noindent \textbf{Justification:}
+This video acts as a comprehensive "walkthrough" of the successful transaction flow. By recording these happy path scenarios, we prove that the integration between the frontend UI and the Spring Boot backend is seamless and that the database correctly handles valid transactional changes in a live environment.
+
+\subsection*{Happy Path: Walkthrough Key Actions \& Timestamps}
 \begin{table}[H]
     \centering
     \small
     \renewcommand{\arraystretch}{1.2}
     \begin{tabular}{|l|p{8cm}|c|}
         \hline
-        \rowcolor{gray!10} \textbf{Phase} & \textbf{Action Performed} & \textbf{Timestamp} \\ \hline
+        \rowcolor{gray!10} \textbf{Phase (Happy Path)} & \textbf{Successful Action Performed} & \textbf{Timestamp} \\ \hline
         \textbf{Registration} & Seller Sign-up: Creating a business profile & [00:05] \\ \cline{2-3}
         & Organization Sign-up: Creating a consumer profile & [00:30] \\ \hline
         \textbf{Seller Flow} & Profile Navigation: Viewing settings and dashboard & [00:36] \\ \cline{2-3}
-        & \textbf{Bundle Creation:} Posting new food surplus for rescue & [01:00] \\ \hline
-        \textbf{Organization} & Listing Discovery: Viewing & [02:40] \\ \cline{2-3}
-        \textbf{Workflow} & \textbf{Reservation 1:} Booking a bundle and generating code & [02:50] \\ \cline{2-3}
+        & \textbf{Bundle Creation:} Successfully posting food surplus & [01:00] \\ \hline
+        \textbf{Organization} & Listing Discovery: Browsing available bundles & [02:40] \\ \cline{2-3}
+        \textbf{Workflow} & \textbf{Reservation:} Booking a bundle and generating code & [02:50] \\ \cline{2-3}
         & Active Claims: Viewing reservations tab & [03:00] \\ \cline{2-3}
-        & \textbf{Cancellation:} Testing the order reversal logic & [03:40] \\ \cline{2-3}
-        & \textbf{Reservation 2:} Re-booking and new code generation & [04:00] \\ \hline
+        & \textbf{Order Integrity:} Re-booking and new code generation & [04:00] \\ \hline
         \textbf{Collection} & \textbf{Handover:} Using confirmation code for pickup & [04:06] \\ \cline{2-3}
         & Seller Dashboard: Verifying "Collected" status & [04:20] \\ \cline{2-3}
         & Consumer Dashboard: Final status update verification & [04:30] \\ \hline
-        \textbf{Persistence} & \textbf{Persistence Check:} Logging out and back in successfully & [05:00] \\ \hline
-        \textbf{Impact} & \textbf{Environmental Impact:} Viewing CO2 and forecast stats & [05:18] \\ \cline{2-3}
+        \textbf{Persistence} & \textbf{Session Management:} Logging out and back in successfully & [05:00] \\ \hline
+        \textbf{Impact} & \textbf{Success Metrics:} Viewing CO2 and forecast stats & [05:18] \\ \cline{2-3}
         & \textbf{Achievements:} Reviewing "First Rescue" badge & [05:35] \\ \hline
     \end{tabular}
-    \caption{Manual Testing Time-Log: Seller and Consumer Integration}
+    \caption{Manual Testing Time-Log: Successful (Happy Path) Integration}
 \end{table}
 
 \begin{figure}[H]
@@ -204,7 +280,7 @@ This video acts as a comprehensive "walkthrough" of the most critical user path 
       addresource=Manual Testing.mp4, 
       flashvars={source=Manual Testing.mp4 & autoPlay=false}
     ]{ \includegraphics[width=0.9\linewidth]{video_poster.png} }{VPlayer.swf}
-    \caption{Manual Testing Demonstration: Live Application Walkthrough}
+    \caption{Happy Path Demonstration: Live Application Walkthrough}
 \end{figure}
 
 \noindent \textbf{Note:} To play the embedded video, please open this PDF in \textbf{Adobe Acrobat Reader}. Alternatively, access the video via the direct link below:
@@ -212,4 +288,5 @@ This video acts as a comprehensive "walkthrough" of the most critical user path 
 \begin{center}
     \url{https://youtu.be/5NwwiJ71_DY}
 \end{center}
+
 \end{document}
