@@ -1,158 +1,146 @@
 #Requires -Version 5.1
-<#
-.SYNOPSIS
-    Byte me - Windows Development Environment Setup Script
-.DESCRIPTION
-    This script installs all required dependencies for the Rescue Bites food waste
-    reduction marketplace project on Windows.
-.NOTES
-    Run this script in PowerShell as Administrator
-    Usage: .\setup-windows.ps1
-#>
+# setup for windows
+# installs java 17, maven, node 20, postgres 16 via chocolatey
+# run in powershell as admin: .\setup-windows.ps1
 
-# CONFIGURATION
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-# Versions
 $NODE_VERSION = "20"
 $JAVA_VERSION = "17"
 
-# Colors for output
-function Write-Step { param($Message) Write-Host "`n[STEP] $Message" -ForegroundColor Cyan }
-function Write-Success { param($Message) Write-Host "[OK] $Message" -ForegroundColor Green }
-function Write-Warning { param($Message) Write-Host "[WARN] $Message" -ForegroundColor Yellow }
-function Write-Error { param($Message) Write-Host "[ERROR] $Message" -ForegroundColor Red }
-function Write-Info { param($Message) Write-Host "[INFO] $Message" -ForegroundColor White }
+function ok($msg)   { Write-Host "  + $msg" -ForegroundColor Green }
+function info($msg) { Write-Host "  $msg" }
+function warn($msg) { Write-Host "  ! $msg" -ForegroundColor Yellow }
+function fail($msg) { Write-Host "  x $msg" -ForegroundColor Red }
 
-# HELPER FUNCTIONS
-function Test-Administrator {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-function Test-Command {
-    param($Command)
-    $null = Get-Command $Command -ErrorAction SilentlyContinue
+function has($cmd) {
+    $null = Get-Command $cmd -ErrorAction SilentlyContinue
     return $?
-}
-
-function Install-Chocolatey {
-    if (!(Test-Command "choco")) {
-        Write-Step "Installing Chocolatey package manager..."
-        Set-ExecutionPolicy Bypass -Scope Process -Force
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-        Write-Success "Chocolatey installed successfully"
-    } else {
-        Write-Success "Chocolatey already installed"
-    }
 }
 
 function Refresh-Path {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 }
 
-
-# Check for administrator privileges
-if (!(Test-Administrator)) {
-    Write-Error "This script requires Administrator privileges."
-    Write-Info "Please right-click PowerShell and select 'Run as Administrator'"
+# check admin
+$currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    fail "need to run this as administrator"
+    info "right-click powershell -> run as administrator"
     exit 1
 }
 
-Write-Success "Running with Administrator privileges"
+Write-Host "setting up Byte Me dev environment on Windows"
+Write-Host ""
 
-# INSTALL CHOCOLATEY (Package Manager)
-Install-Chocolatey
+# chocolatey
+Write-Host "--- chocolatey ---"
+if (-not (has "choco")) {
+    info "installing chocolatey..."
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    Refresh-Path
+    ok "chocolatey installed"
+} else {
+    ok "chocolatey already installed"
+}
 
-# INSTALL GIT
-Write-Step "Checking Git..."
-if (!(Test-Command "git")) {
-    Write-Info "Installing Git..."
+# git
+Write-Host ""
+Write-Host "--- git ---"
+if (-not (has "git")) {
     choco install git -y --no-progress
     Refresh-Path
-    Write-Success "Git installed successfully"
+    ok "git installed"
 } else {
-    $gitVersion = git --version
-    Write-Success "Git already installed: $gitVersion"
+    ok "$(git --version)"
 }
 
-# INSTALL NODE.JS
-Write-Step "Checking Node.js..."
-if (!(Test-Command "node")) {
-    Write-Info "Installing Node.js v$NODE_VERSION..."
+# node
+Write-Host ""
+Write-Host "--- node.js ---"
+if (-not (has "node")) {
+    info "installing node.js lts..."
     choco install nodejs-lts -y --no-progress
     Refresh-Path
-    Write-Success "Node.js installed successfully"
+    ok "node installed"
 } else {
-    $nodeVersion = node --version
-    Write-Success "Node.js already installed: $nodeVersion"
+    ok "node $(node --version)"
 }
 
-# Verify npm
-if (!(Test-Command "npm")) {
-    Write-Error "npm not found. Please reinstall Node.js"
+if (-not (has "npm")) {
+    fail "npm not found, something went wrong with node"
     exit 1
 }
-$npmVersion = npm --version
-Write-Success "npm version: $npmVersion"
+ok "npm $(npm --version)"
 
-# INSTALL JAVA (OpenJDK)
-Write-Step "Checking Java..."
-$javaInstalled = $false
+# java
+Write-Host ""
+Write-Host "--- java $JAVA_VERSION ---"
+$javaOk = $false
 try {
-    $javaVersion = java -version 2>&1 | Select-String "version"
-    if ($javaVersion) {
-        $javaInstalled = $true
-        Write-Success "Java already installed: $javaVersion"
+    $jv = java -version 2>&1 | Select-String "version"
+    if ($jv) {
+        $javaOk = $true
+        ok "java already installed: $jv"
     }
-} catch {
-    $javaInstalled = $false
-}
+} catch {}
 
-if (!$javaInstalled) {
-    Write-Info "Installing OpenJDK $JAVA_VERSION..."
+if (-not $javaOk) {
+    info "installing openjdk $JAVA_VERSION..."
     choco install openjdk$JAVA_VERSION -y --no-progress
     Refresh-Path
-    
-    # Set JAVA_HOME
+
     $javaPath = (Get-ChildItem "C:\Program Files\OpenJDK\*" -Directory | Sort-Object Name -Descending | Select-Object -First 1).FullName
     if ($javaPath) {
         [System.Environment]::SetEnvironmentVariable("JAVA_HOME", $javaPath, "Machine")
         $env:JAVA_HOME = $javaPath
-        Write-Success "JAVA_HOME set to: $javaPath"
+        ok "JAVA_HOME = $javaPath"
     }
-    Write-Success "Java installed successfully"
+    ok "java installed"
 }
 
-# INSTALL MAVEN
-Write-Step "Checking Maven..."
-if (!(Test-Command "mvn")) {
-    Write-Info "Installing Maven..."
+# maven
+Write-Host ""
+Write-Host "--- maven ---"
+if (-not (has "mvn")) {
     choco install maven -y --no-progress
     Refresh-Path
-    Write-Success "Maven installed successfully"
+    ok "maven installed"
 } else {
-    $mvnVersion = mvn --version | Select-Object -First 1
-    Write-Success "Maven already installed: $mvnVersion"
+    ok "$(mvn --version | Select-Object -First 1)"
 }
 
-Write-Host "Installed Components:" -ForegroundColor Cyan
-Write-Host "  - Git:        $(if (Test-Command 'git') { git --version } else { 'NOT INSTALLED' })"
-Write-Host "  - Node.js:    $(if (Test-Command 'node') { node --version } else { 'NOT INSTALLED' })"
-Write-Host "  - npm:        $(if (Test-Command 'npm') { npm --version } else { 'NOT INSTALLED' })"
-Write-Host "  - Java:       $(if (Test-Command 'java') { 'Installed' } else { 'NOT INSTALLED' })"
-Write-Host "  - Maven:      $(if (Test-Command 'mvn') { 'Installed' } else { 'NOT INSTALLED' })"
-Write-Host "  - PostgreSQL: $(if (Test-Command 'psql') { psql --version } else { 'NOT INSTALLED' })"
+# postgres
 Write-Host ""
-Write-Host "                    NEXT STEPS                              " -ForegroundColor Magenta
-Write-Host "1. Close and reopen your terminal to refresh PATH" -ForegroundColor Yellow
+Write-Host "--- postgresql ---"
+if (-not (has "psql")) {
+    info "installing postgresql..."
+    choco install postgresql16 -y --no-progress --params '/Password:postgres'
+    Refresh-Path
+    ok "postgresql installed (default password: postgres)"
+} else {
+    ok "$(psql --version)"
+}
+
+# summary
 Write-Host ""
-Write-Host "2. Configure your .env files with your settings" -ForegroundColor Yellow
+Write-Host "-----------------------------"
+Write-Host "everything should be installed now"
 Write-Host ""
-Write-Host "3. Start the development servers:" -ForegroundColor Yellow
-Write-Host "   Frontend:  cd frontend && npm run dev" -ForegroundColor White
-Write-Host "   Backend:   cd backend && mvn spring-boot:run" -ForegroundColor White
+Write-Host "  git:      $(if (has 'git') { git --version } else { 'missing' })"
+Write-Host "  node:     $(if (has 'node') { node --version } else { 'missing' })"
+Write-Host "  npm:      $(if (has 'npm') { npm --version } else { 'missing' })"
+Write-Host "  java:     $(if (has 'java') { 'installed' } else { 'missing' })"
+Write-Host "  maven:    $(if (has 'mvn') { 'installed' } else { 'missing' })"
+Write-Host "  postgres: $(if (has 'psql') { psql --version } else { 'missing' })"
+Write-Host ""
+Write-Host "next steps:"
+Write-Host "  1. close and reopen your terminal"
+Write-Host "  2. create the database: psql -U postgres -c 'CREATE DATABASE byte_me;'"
+Write-Host "  3. copy .env.example to backend/.env and fill in your values"
+Write-Host "  4. start backend:  cd backend; mvn spring-boot:run"
+Write-Host "  5. start frontend: cd frontend; npm install; npm run dev"
