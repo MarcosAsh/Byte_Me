@@ -1,0 +1,113 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\geometry{margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  breaklines=true,
+  tabsize=2
+}
+
+\title{Deployment and Operations}
+\author{Group 2 -- Byte Me}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+We deploy Byte Me as three separate services on Railway: the Next.js frontend, a Spring Boot backend, and a Postgres database. When we push to \texttt{master}, Railway picks up the changes and redeploys everything automatically. We also have GitHub Actions running tests on every push and PR so nothing broken makes it to production.
+
+\section{How the repo is set up}
+
+The whole project lives in one repo with two app directories. \texttt{/frontend} has the Next.js app (React 19, TypeScript, Tailwind CSS 4) and \texttt{/backend} has the Spring Boot API (Java 17, built with Maven).
+
+The frontend calls the backend over HTTPS. We set the backend URL through an environment variable called \texttt{NEXT\_PUBLIC\_API\_URL}. On the backend side, it connects to a Postgres 16 instance that Railway provisions and manages for us.
+
+\section{Railway}
+
+We chose Railway (\url{https://railway.com}) for hosting because it handles a lot of the infrastructure work for us. It reads the repo, figures out the build system on its own, and uses Nixpacks to build everything. We didn't need to write a Dockerfile.
+
+The frontend builds with \texttt{npm run build} and then runs \texttt{npm start}. The backend gets packaged by Maven and runs as a jar. Postgres is fully managed by Railway, we just connect to it.
+
+Each service gets its own public URL, something like \texttt{https://frontend-production-c253c.up.railway.app}. Railway is linked to our GitHub repo, so pushing to \texttt{master} kicks off a fresh deploy for all three services. They build independently and go live once they pass the health check.
+
+\section{Environment variables}
+
+We keep all configuration in environment variables set through Railway's dashboard. No secrets in the repo. There's a \texttt{.env.example} file in the root that shows what's needed.
+
+For the backend we have:
+
+\begin{itemize}
+  \item \texttt{SERVER\_PORT} -- defaults to 8080
+  \item \texttt{DB\_URL}, \texttt{DB\_USERNAME}, \texttt{DB\_PASSWORD} -- database connection. Railway injects these automatically from the managed Postgres instance
+  \item \texttt{JWT\_SECRET} -- the signing key for JWTs, needs to be at least 32 bytes
+  \item \texttt{JWT\_EXPIRATION} -- how long tokens last in milliseconds, we set it to 24 hours
+  \item \texttt{CORS\_ORIGINS} -- set to the frontend's production URL
+\end{itemize}
+
+The frontend just needs one: \texttt{NEXT\_PUBLIC\_API\_URL}, which points at the backend.
+
+\section{Database migrations}
+
+We use Flyway to manage the database schema. Migrations run automatically when the backend starts up, so we don't have to do anything manually.
+
+There are three migration files right now. \texttt{V1\_\_init\_schema.sql} sets up the initial tables (users, bundles, categories, reservations, and so on). \texttt{V2\_\_add\_forecast\_action.sql} adds the forecast action tracking we needed later. \texttt{R\_\_seed.sql} is a repeatable migration that loads seed data for development.
+
+We have \texttt{baseline-on-migrate} turned on so Flyway can be applied to an existing database without extra setup.
+
+\section{CI/CD}
+
+We have two GitHub Actions workflows.
+
+The backend one lives at \texttt{.github/workflows/backend-tests.yml} and fires when anything under \texttt{backend/} changes. It sets up Java 17, caches Maven dependencies, runs \texttt{mvn clean test}, and then publishes a JUnit report with the results.
+
+The frontend one is at \texttt{.github/workflows/frontend-checks.yml} and triggers on changes to \texttt{frontend/}. It sets up Node 20, installs dependencies with \texttt{npm ci}, runs the production build to make sure it compiles, and then runs all the Vitest tests.
+
+Both have to pass before we can merge a PR.
+
+\section{Running locally}
+
+You need Java 17, Maven 3.9+, Node.js 20+, and Postgres 16 installed. We have setup scripts in \texttt{scripts/} for both macOS and Windows that handle most of this.
+
+For the backend:
+
+\begin{lstlisting}
+cd backend
+mvn spring-boot:run
+\end{lstlisting}
+
+That starts on port 8080. Flyway will create all the tables and load seed data on the first run.
+
+For the frontend:
+
+\begin{lstlisting}
+cd frontend
+npm install
+npm run dev
+\end{lstlisting}
+
+That starts on port 3000 and talks to whatever \texttt{NEXT\_PUBLIC\_API\_URL} is set to (defaults to localhost:8080).
+
+\section{Monitoring}
+
+Railway gives us a dashboard for each service where we can see logs in real time, check deployment history, look at resource usage, and roll back to a previous build if something goes wrong. We can also query deployment status through their GraphQL API with a project token, which we've used a couple of times to check on things programmatically.
+
+\section{Dependencies}
+
+On the backend we're using Spring Boot 3.2.1 as the main framework, with Spring Security for auth, Spring Data JPA for database access through Hibernate, and Flyway for migrations. JWTs are handled by jjwt 0.12.3. We use Lombok to cut down on boilerplate and H2 as an in-memory database for tests.
+
+On the frontend, Next.js 16.1.3 handles routing and server-side rendering. Styling is done with Tailwind CSS 4. We use Zustand for state management since it's lightweight and simple. Recharts powers the analytics charts. Testing is done with Vitest and React Testing Library.
+
+\end{document}
