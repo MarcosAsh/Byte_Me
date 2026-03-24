@@ -1,0 +1,153 @@
+\documentclass[]{report}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+
+\definecolor{done}{rgb}{0.56,0.93,0.56}
+\definecolor{partial}{rgb}{0.93,0.93,0.56}
+\definecolor{notdone}{rgb}{0.93,0.70,0.70}
+
+\newcommand{\done}{\colorbox{done}{\strut Done}}
+\newcommand{\notimpl}{\colorbox{notdone}{\strut Not implemented}}
+\newcommand{\disabled}{\colorbox{partial}{\strut Disabled (intentional)}}
+
+\renewcommand{\arraystretch}{1.4}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{5cm}
+\includegraphics[width=10cm]{BM.png}
+\vspace*{1cm}
+{\Huge \\ Security Checklist}
+\end{titlepage}
+
+\section*{Overview}
+
+This document lists the security measures in place for the final Byte Me system, along with outstanding items and the reasoning for why they fall outside the current scope. 22 items are implemented. 6 are not implemented, all with documented justification.
+
+\section*{Authentication}
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Password hashing & \done & BCrypt via Spring Security \texttt{BCryptPasswordEncoder} \\
+\hline
+JWT token authentication & \done & HMAC-SHA signed. Claims include \texttt{userId}, \texttt{email}, \texttt{role} \\
+\hline
+Token expiration & \done & 24 hours, configurable via \texttt{JWT\_EXPIRATION} env var \\
+\hline
+Token refresh mechanism & \notimpl & Users must re-login after expiry. Acceptable for coursework scope \\
+\hline
+Rate limiting on login & \notimpl & Brute force possible in theory. Would need Spring Rate Limiter or an API gateway for production \\
+\hline
+Account lockout after failed attempts & \notimpl & Not required for current scope \\
+\hline
+\end{longtable}
+
+\section*{Authorisation}
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Role-based access control & \done & Two roles: \texttt{SELLER}, \texttt{ORG\_ADMIN}. Enforced at controller level \\
+\hline
+Ownership validation & \done & Every protected endpoint verifies the requesting user owns the resource (e.g.\ a seller can only modify their own bundles) \\
+\hline
+Database-level role enforcement & \done & Triggers \texttt{seller\_role\_check} and \texttt{organisation\_role\_check} prevent role mismatches at insert \\
+\hline
+Public endpoint whitelist & \done & \texttt{SecurityConfig} permits \texttt{/api/auth/**}, \texttt{GET /api/bundles}, \texttt{GET /api/categories}, \texttt{GET /api/gamification/badges} \\
+\hline
+\end{longtable}
+
+\section*{Data Protection}
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Secrets in environment variables & \done & \texttt{DB\_URL}, \texttt{DB\_USERNAME}, \texttt{DB\_PASSWORD}, \texttt{JWT\_SECRET} all via env vars, not in code \\
+\hline
+\texttt{.env.example} provided (no real secrets) & \done & Template file in repo root and \texttt{backend/} \\
+\hline
+\texttt{.gitignore} covers \texttt{.env} files & \done & \texttt{.env} excluded from version control \\
+\hline
+Encrypted database connections & \done & Railway PostgreSQL uses TLS by default \\
+\hline
+Claim codes hashed & \done & BCrypt hashed; only the last 4 digits shown to the user \\
+\hline
+CORS configuration & \done & Allowed origins configurable via \texttt{CORS\_ORIGINS} env var \\
+\hline
+CSRF protection & \disabled & Appropriate for a stateless JWT API with no cookie-based auth \\
+\hline
+\end{longtable}
+
+\section*{Input Validation}
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Frontend email validation & \done & Format check on \texttt{@} and domain \\
+\hline
+Frontend password minimum length & \done & 6 characters minimum \\
+\hline
+Frontend required field checks & \done & All forms validate before submission \\
+\hline
+Backend availability check before reservation & \done & Trigger verifies bundle is \texttt{ACTIVE}, pickup window has not ended, and quantity is available \\
+\hline
+Database constraints on business rules & \done & 7+ \texttt{CHECK} constraints (price non-negative, discount 0--100, quantity reserved $\leq$ total, pickup end $>$ start, weight non-negative) \\
+\hline
+SQL injection prevention & \done & Spring Data JPA parameterised queries throughout; no raw SQL concatenation \\
+\hline
+XSS prevention & \done & React auto-escapes rendered content by default \\
+\hline
+\end{longtable}
+
+\section*{Infrastructure}
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Notes} \\
+\hline
+CI pipeline on every push/PR & \done & Two GitHub Actions workflows: backend (Maven + JUnit) and frontend (npm build + Vitest) \\
+\hline
+HTTPS in production & \done & Railway provisions HTTPS by default on \texttt{*.up.railway.app} domains \\
+\hline
+Audit logging & \notimpl & No record of who accessed what and when. Would need for production \\
+\hline
+Dependency vulnerability scanning & \notimpl & No Dependabot or Snyk configured. Would add for production \\
+\hline
+Staging environment & \notimpl & Deploys go straight to production from master. Acknowledged as a residual risk in the risk register (R4) \\
+\hline
+\end{longtable}
+
+\section*{Food Safety}
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7cm}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Allergen display & \done & All 14 UK allergens per Natasha's Law (2021), displayed on every bundle \\
+\hline
+Allergen popup reminder & \done & Shown each time users access \texttt{/reservations} \\
+\hline
+Safety disclaimer & \done & Platform does not guarantee allergen accuracy -- seller responsibility per Terms of Service \\
+\hline
+Allergen data verification & \notimpl & No mechanism to verify seller-reported allergens. Mitigated by disclaimer and Terms of Service \\
+\hline
+\end{longtable}
+
+\section*{Summary}
+
+22 items are implemented. 6 are not implemented. All 6 fall outside the coursework scope for one of two reasons: they would only be necessary for a production deployment handling real user data (rate limiting, account lockout, audit logging, dependency scanning, staging environment), or the mitigation is contractual rather than technical and is covered by documentation (allergen verification). Each is noted in the risk register with a justification.
+
+\end{document}
